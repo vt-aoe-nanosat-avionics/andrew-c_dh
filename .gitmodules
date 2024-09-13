@@ -10,3 +10,6 @@
 [submodule "ta-ctrl"]
 	path = ta-ctrl
 	url = git@github.com:CMUAbstract/ta-ctrl-sw.git
+[submodule "ta-expt/software/andrew-libopencm3"]
+	path = ta-expt/software/andrew-libopencm3
+	url = git@github.com:vt-aoe-nanosat-avionics/andrew-libopencm3.git
