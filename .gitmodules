@@ -1,15 +1,12 @@
 [submodule "ta-expt/utilities/stlink"]
 	path = ta-expt/utilities/stlink
 	url = https://github.com/stlink-org/stlink
-[submodule "ta-expt/software/libopencm3"]
-	path = ta-expt/software/libopencm3
-	url = https://github.com/libopencm3/libopencm3
 [submodule "ta-comm/openlst"]
 	path = ta-comm/openlst
 	url = https://github.com/CMUAbstract/openlst
 [submodule "ta-ctrl"]
 	path = ta-ctrl
 	url = git@github.com:CMUAbstract/ta-ctrl-sw.git
-[submodule "ta-expt/software/andrew-libopencm3"]
-	path = ta-expt/software/andrew-libopencm3
-	url = git@github.com:vt-aoe-nanosat-avionics/andrew-libopencm3.git
+[submodule "ta-expt/software/libopencm3"]
+	path = ta-expt/software/libopencm3
+	url = git@github.com:vt-aoe-nanosat-avionics/libopencm3.git
