@@ -27,9 +27,9 @@ sudo cp ta-expt/utilities/stlink/config/udev/rules.d/*.rules /etc/udev/rules.d/
 ```
 
 Install the arm gcc compiler from the link below
-'''bash
+```bash
 https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain
-'''
+```
 
 **Notes for ta-expt dependency setup**
 
