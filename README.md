@@ -26,6 +26,11 @@ sudo apt install build-essential cmake gcc libusb-1.0-0 libusb-1.0-0-dev libgtk-
 sudo cp ta-expt/utilities/stlink/config/udev/rules.d/*.rules /etc/udev/rules.d/
 ```
 
+Install the arm gcc compiler from the link below
+'''bash
+https://developer.arm.com/Tools%20and%20Software/GNU%20Toolchain
+'''
+
 **Notes for ta-expt dependency setup**
 
 * The first line installs basic dependencies, including USB support for the
@@ -35,18 +40,6 @@ sudo cp ta-expt/utilities/stlink/config/udev/rules.d/*.rules /etc/udev/rules.d/
 
 ## Programming the Stackup
 
-The code included in this repo is intended to be programmed onto each of the
-boards as part of a combined stackup (i.e. fully connected and inside the
-chassis). However the hardware realities of the stack throw off this process.
-When possible, program the boards before placing them in a unified stackup,
-barring that here are notes from the process in 2021:
-
-* Program the CTRL board
-    * Ground the stackup via the chassis and as many pins as possible.
-    * Provide 3.3V (<100mA) directly to Vdd on the CTRL board.
-    * Program the CTRL board with the flight code-- the flight code will enabled the
-voltage rails to the EXPT board and COMM board, then turn off power to the CTRL
-board.
 * Programming the EXPT board:
     * Grounding is key for this to work
     * Attach logic analyzer pins to the st-link programming pins (SWDIO and SWCLK)
@@ -57,18 +50,11 @@ EXPT board GND to another pin on the stackup.
 in ta-expt/
     * Pin states for debugging: Boot needs to be pulled low. RST needs to be
 pulled up.
-* Programming the COMM board:
-    * Programming with the CC Debugger works as expected
-    * To program the COMM board over UART, power the COMM 3.3V rail directly and
-    * then connect the UART and program and described in ta-comm/openlst/open-lst/USERS\_GUIDE.md
 
 
 ## Directory Contents
 
 * [scripts](scripts/README.md): Scripts for supporting the repository
-* [ta-comm](ta-comm/README.md): Software for the Tartan Artibeus communication
-  board
-* [ta-ctrl](ta-ctrl/README.md): Software for the Tartan Artibeus control board
 * [ta-expt](ta-expt/README.md): Software for the Tartan Artibeus experiment
   board
 * [README.md](README.md): This document
@@ -85,5 +71,6 @@ pulled up.
 Written by Bradley Denby
 Other contributors:
 Emily Ruppel
+Andrew McGrellis
 
 See the top-level LICENSE file for the license.
