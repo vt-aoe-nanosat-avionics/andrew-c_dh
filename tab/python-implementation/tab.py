@@ -19,6 +19,11 @@ START_BYTE_0 = 0x22
 START_BYTE_1 = 0x69
 
 ## Opcodes
+APP_GET_TELEM_OPCODE                = 0x17
+APP_GET_TIME_OPCODE                 = 0x13
+APP_REBOOT_OPCODE                   = 0x12
+APP_SET_TIME_OPCODE                 = 0x14
+APP_TELEM_OPCODE                    = 0x18
 COMMON_ACK_OPCODE                   = 0x10
 COMMON_NACK_OPCODE                  = 0xff
 COMMON_DEBUG_OPCODE                 = 0x11
@@ -387,6 +392,14 @@ class TxCmd:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == BOOTLOADER_SLEEP_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == APP_GET_TELEM_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == APP_GET_TIME_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == APP_REBOOT_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == APP_SET_TIME_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
     else:
       self.data[MSG_LEN_INDEX] = 0x06
 
@@ -423,6 +436,14 @@ class TxCmd:
         self.data[MSG_LEN_INDEX] = 0x8a
         for i in range(0,len(page_data)):
           self.data[PLD_START_INDEX+4+i] = page_data[i]
+          
+  def app_set_time(self, time):
+    if self.data[OPCODE_INDEX] == APP_SET_TIME_OPCODE:
+      time_bytes = time.to_bytes(4,byteorder='big')
+      self.data[PLD_START_INDEX]   = time_bytes[0]
+      self.data[PLD_START_INDEX+1] = time_bytes[1]
+      self.data[PLD_START_INDEX+2] = time_bytes[2]
+      self.data[PLD_START_INDEX+3] = time_bytes[3]
 
   def get_byte_count(self):
     return self.data[MSG_LEN_INDEX]+0x03
