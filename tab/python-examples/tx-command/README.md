@@ -1,6 +1,6 @@
 # Python TX Command
 
-A TAB script to transmit commands with Python.
+A Python script to transmit TAB commands over a serial connection
 
 Usage:
 * Ensure the dependencies outlined in the Python examples [README](../README.md)
