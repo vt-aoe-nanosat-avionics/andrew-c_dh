@@ -1,5 +1,7 @@
 # Tartan Artibeus Experiment Board Low Power Software
 
+Ensure that this demo is built with the custom version of libopencm3 or it will no t build. The custom version of libopencm3 is added as a submodule of this repsoitory under ``ta-expt/software/libopencm3``
+
 ```bash
 cd ../../scripts/
 source sourcefile.txt
