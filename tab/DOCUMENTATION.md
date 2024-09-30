@@ -308,17 +308,16 @@ This command instructs the bootloader to
 * Name: `bootloader_power`
 * Required parameters: Power Mode
 * Reply:
-  * If the bootloader is active and successfully performs the write:
-    `TBD` with the Start Address as the payload
-  * If the bootloader is active and fails to perform the write:
-    `TBD`
-  * Otherwise: `TBD`
+  * If the bootloader is active and successfully changes power mode:
+    `bootloader_ack`
+  * If the bootloader is active and fails to change power mode:
+    `bootloader_nack`
 
 **Header**
 
 | Start Byte 0 | Start Byte 1 | Remaining Bytes | HW ID LSByte | HW ID MSByte | MSG ID LSByte | MSG ID MSByte | Route Nibbles | Opcode |
 | ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
-| 0x22         | 0x69         | 0x07 OR 0x87    | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x20   |
+| 0x22         | 0x69         | 0x07 OR 0x87    | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x0d   |
 
 **Payload**
 
