@@ -443,6 +443,7 @@ class TxCmd:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == BOOTLOADER_POWER_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x07
+      self.data[PLD_START_INDEX] = 0x00
     elif self.data[OPCODE_INDEX] == APP_GET_TELEM_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == APP_GET_TIME_OPCODE:
