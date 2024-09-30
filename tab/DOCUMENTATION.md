@@ -301,6 +301,48 @@ application.
 
 No payload
 
+### <a name="bootloader-power"></a> Bootloader Power
+
+This command instructs the bootloader to 
+* Name: `bootloader_power`
+* Required parameters: Power Mode
+* Reply:
+  * If the bootloader is active and successfully performs the write:
+    `TBD` with the Start Address as the payload
+  * If the bootloader is active and fails to perform the write:
+    `TBD`
+  * Otherwise: `TBD`
+
+**Header**
+
+| Start Byte 0 | Start Byte 1 | Remaining Bytes | HW ID LSByte | HW ID MSByte | MSG ID LSByte | MSG ID MSByte | Route Nibbles | Opcode |
+| ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
+| 0x22         | 0x69         | 0x07 OR 0x87    | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x20   |
+
+**Payload**
+
+| Power Bytes (Required) |
+| ---------------------- |
+| 0xHH                   |
+
+Power bytes:
+| Power Mode      | Byte |
+| Sleep           | 0x00 |
+| --------------- | ---- |
+| Low-Power run   | 0x01 |
+| --------------- | ---- |
+| Low-power sleep | 0x02 |
+| --------------- | ---- |
+| Stop 0          | 0x03 |
+| --------------- | ---- |
+| Stop 1          | 0x04 |
+| --------------- | ---- |
+| Stop 2          | 0x05 |
+| --------------- | ---- |
+| Standy          | 0x06 |
+| --------------- | ---- |
+| Shutdown        | 0x07 |
+
 ## <a name="protocol"></a> Protocol
 
 TODO
