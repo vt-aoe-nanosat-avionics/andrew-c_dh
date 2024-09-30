@@ -327,22 +327,24 @@ This command instructs the bootloader to
 | 0xHH                   |
 
 Power bytes:
+
 | Power Mode      | Byte |
-| Sleep           | 0x00 |
+| Run             | 0x00
+| Sleep           | 0x01 |
 | --------------- | ---- |
-| Low-Power run   | 0x01 |
+| Low-power run   | 0x02 |
 | --------------- | ---- |
-| Low-power sleep | 0x02 |
+| Low-power sleep | 0x03 |
 | --------------- | ---- |
-| Stop 0          | 0x03 |
+| Stop 0          | 0x04 |
 | --------------- | ---- |
-| Stop 1          | 0x04 |
+| Stop 1          | 0x05 |
 | --------------- | ---- |
-| Stop 2          | 0x05 |
+| Stop 2          | 0x06 |
 | --------------- | ---- |
-| Standy          | 0x06 |
+| Standy          | 0x07 |
 | --------------- | ---- |
-| Shutdown        | 0x07 |
+| Shutdown        | 0x08 |
 
 ## <a name="protocol"></a> Protocol
 
