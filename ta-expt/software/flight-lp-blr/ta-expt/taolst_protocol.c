@@ -21,6 +21,8 @@
 // Variables
 extern int in_bootloader;    // Used in bootloader main to indicate MCU state
 extern int app_jump_pending; // Used in bootloader main to signal jump to app
+extern int power_mode;       // Used in bootloader main to indicate power mode
+extern int power_mode_pending; // Used in bootloader main to signal power mode change
 
 // Helper functions
 
@@ -96,6 +98,97 @@ int bootloader_write_data(rx_cmd_buff_t* rx_cmd_buff) {
     }
     flash_lock();
     return 1;
+  } else {
+    return 0;
+  }
+}
+
+//// Given a well-formed BOOTLOADER_POWER command, queues correspondng power mode
+int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
+  if(
+   rx_cmd_buff->state==RX_CMD_BUFF_STATE_COMPLETE &&
+   rx_cmd_buff->data[OPCODE_INDEX]==BOOTLOADER_POWER_OPCODE
+  ) {
+    switch(rx_cmd_buff->data[DATA_START_INDEX]) {
+      case BOOTLOADER_POWER_RUN:
+        if(power_mode==BOOTLOADER_POWER_SLEEP ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+           power_mode==BOOTLOADER_POWER_STOP0 ||
+           power_mode==BOOTLOADER_POWER_STOP1 ||
+           power_mode==BOOTLOADER_POWER_STOP2 ||
+           power_mode==BOOTLOADER_POWER_STANDBY ||
+           power_mode==BOOTLOADER_POWER_SHUTDOWN) {
+          power_mode_pending = BOOTLOADER_POWER_RUN;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_SLEEP:
+        if(power_mode==BOOTLOADER_POWER_RUN) {
+          power_mode_pending = BOOTLOADER_POWER_SLEEP;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_LOWPOWERRUN:
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERSLEEP ||
+           power_mode==BOOTLOADER_POWER_STOP1 ||
+           power_mode==BOOTLOADER_POWER_STANDBY ||
+           power_mode==BOOTLOADER_POWER_SHUTDOWN) {
+          power_mode_pending = BOOTLOADER_POWER_LOWPOWERRUN;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_LOWPOWERSLEEP:
+        if(power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+          power_mode_pending = BOOTLOADER_POWER_LOWPOWERSLEEP;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_STOP0:
+        if(power_mode==BOOTLOADER_POWER_RUN) {
+          power_mode_pending = BOOTLOADER_POWER_STOP0;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_STOP1:
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+          power_mode_pending = BOOTLOADER_POWER_STOP1;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_STOP2:
+        if(power_mode==BOOTLOADER_POWER_RUN) {
+          power_mode_pending = BOOTLOADER_POWER_STOP2;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_STANDBY:
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+          power_mode_pending = BOOTLOADER_POWER_STANDBY;
+          return 1;
+        } else {
+          return 0;
+        }
+      case BOOTLOADER_POWER_SHUTDOWN:
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+          power_mode_pending = BOOTLOADER_POWER_SHUTDOWN;
+          return 1;
+        } else {
+          return 0;
+        }
+      default:
+        return 0;
+    }
   } else {
     return 0;
   }
@@ -328,9 +421,16 @@ void write_reply(rx_cmd_buff_t* rx_cmd_buff_o, tx_cmd_buff_t* tx_cmd_buff_o) {
           tx_cmd_buff_o->data[OPCODE_INDEX] = COMMON_NACK_OPCODE;
         }
         break;
-      case BOOTLOADER_SLEEP_OPCODE:
-        tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);
-        tx_cmd_buff_o->data[OPCODE_INDEX] = BOOTLOADER_SLEEP_OPCODE;
+      case BOOTLOADER_POWER_OPCODE:
+        success = 0;
+        success = bootloader_power_mode_change(rx_cmd_buff_o);
+        if(success) {
+          tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);
+          tx_cmd_buff_o->data[OPCODE_INDEX] = BOOTLOADER_ACK_OPCODE;
+        } else {
+          tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);
+          tx_cmd_buff_o->data[OPCODE_INDEX] = BOOTLOADER_NACK_OPCODE;
+        }
         break;
       case COMMON_ACK_OPCODE:
         tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);

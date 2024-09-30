@@ -37,7 +37,7 @@ BOOTLOADER_ERASE_OPCODE             = 0x0c
 BOOTLOADER_WRITE_PAGE_OPCODE        = 0x02
 BOOTLOADER_WRITE_PAGE_ADDR32_OPCODE = 0x20
 BOOTLOADER_JUMP_OPCODE              = 0x0b
-BOOTLOADER_SLEEP_OPCODE             = 0x0d
+BOOTLOADER_POWER_OPCODE             = 0x0d
 
 ## Route Nibble IDs
 GND = 0x00
@@ -243,9 +243,10 @@ class TxCmdBuff:
       elif rx_cmd_buff.data[OPCODE_INDEX] == BOOTLOADER_JUMP_OPCODE:
         self.data[MSG_LEN_INDEX] = 0x06
         self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
-      elif rx_cmd_buff.data[OPCODE_INDEX] == BOOTLOADER_SLEEP_OPCODE:
-        self.data[MSG_LEN_INDEX] = 0x06
+      elif rx_cmd_buff.data[OPCODE_INDEX] == BOOTLOADER_POWER_OPCODE:
+        self.data[MSG_LEN_INDEX] = 0x07
         self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
+        self.data[PLD_START_INDEX] = 0x01
       elif rx_cmd_buff.data[OPCODE_INDEX] == APP_GET_TELEM_OPCODE:
         self.data[MSG_LEN_INDEX] = 0x54
         self.data[OPCODE_INDEX] = APP_TELEM_OPCODE
@@ -368,8 +369,8 @@ def cmd_bytes_to_str(data):
         pld_str += '{:02x}'.format(data[PLD_START_INDEX+4+i])
   elif data[OPCODE_INDEX] == BOOTLOADER_JUMP_OPCODE:
     cmd_str += 'bootloader_jump'
-  elif data[OPCODE_INDEX] == BOOTLOADER_SLEEP_OPCODE:
-    cmd_str += 'bootloader_sleep'
+  elif data[OPCODE_INDEX] == BOOTLOADER_POWER_OPCODE:
+    cmd_str += 'bootloader_power'
   elif data[OPCODE_INDEX] == APP_GET_TELEM_OPCODE:
     cmd_str += 'app_get_telem'
   elif data[OPCODE_INDEX] == APP_GET_TIME_OPCODE:
@@ -440,8 +441,8 @@ class TxCmd:
       self.data[PLD_START_INDEX+3] = 0x00
     elif self.data[OPCODE_INDEX] == BOOTLOADER_JUMP_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
-    elif self.data[OPCODE_INDEX] == BOOTLOADER_SLEEP_OPCODE:
-      self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == BOOTLOADER_POWER_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x07
     elif self.data[OPCODE_INDEX] == APP_GET_TELEM_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == APP_GET_TIME_OPCODE:
@@ -449,7 +450,7 @@ class TxCmd:
     elif self.data[OPCODE_INDEX] == APP_REBOOT_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == APP_SET_TIME_OPCODE:
-      self.data[MSG_LEN_INDEX] = 0x06
+      self.data[MSG_LEN_INDEX] = 0x0e
     else:
       self.data[MSG_LEN_INDEX] = 0x06
 

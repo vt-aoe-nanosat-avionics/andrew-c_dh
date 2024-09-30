@@ -261,27 +261,27 @@ while(1):
     msgid += 1
     time.sleep(1.0)
 
-  elif code == "bootloader_sleep":
-    cmd = TxCmd(BOOTLOADER_SLEEP_OPCODE, HWID, msgid, GND, CDH)
+  elif code == "bootloader_power":
+    cmd = TxCmd(BOOTLOADER_POWER_OPCODE, HWID, msgid, GND, CDH)
     byte_i = 0
-    while byte_i < cmd.get_byte_count():
-    #while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+    #while byte_i < cmd.get_byte_count():
+    while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
       if byte_i < cmd.get_byte_count():
         serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
         byte_i += 1
-    #  if serial_port.in_waiting>0:
-    #    bytes = serial_port.read(1)
-    #    for b in bytes:
-    #      rx_cmd_buff.append_byte(b)
-    #print('txcmd: '+str(cmd))
-    #print('reply: '+str(rx_cmd_buff)+'\n')
+      if serial_port.in_waiting>0:
+        bytes = serial_port.read(1)
+        for b in bytes:
+          rx_cmd_buff.append_byte(b)
+    print('txcmd: '+str(cmd))
+    print('reply: '+str(rx_cmd_buff)+'\n')
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
     time.sleep(1.0)
 
   elif code == "app_get_telem":
-    cmd = TxCmd(COMMON_ASCII_OPCODE, HWID, msgid, SRC, DST)
+    cmd = TxCmd(COMMON_ASCII_OPCODE, HWID, msgid, GND, CDH)
     tle  = 'TLE'
     tle += 'FLOCK 3K-5              '
     tle += '1 43899U 18111Z   21284.66246111  .00014637  00000-0  51582-3 0  9994'
@@ -304,7 +304,7 @@ while(1):
     time.sleep(1.0)
 
   elif code == "app_get_time":
-    cmd = TxCmd(APP_GET_TIME_OPCODE, HWID, msgid, SRC, DST)
+    cmd = TxCmd(APP_GET_TIME_OPCODE, HWID, msgid, GND, CDH)
     byte_i = 0
     while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
       if byte_i < cmd.get_byte_count():
@@ -323,8 +323,9 @@ while(1):
 
   elif code == "app_reboot":
     continue
+
   elif code == "app_set_time":
-    cmd = TxCmd(APP_SET_TIME_OPCODE, HWID, msgid, SRC, DST)
+    cmd = TxCmd(APP_SET_TIME_OPCODE, HWID, msgid, GND, CDH)
     td = datetime.datetime.now(tz=datetime.timezone.utc) - J2000
     cmd.app_set_time(sec=math.floor(td.total_seconds()), ns=(td.microseconds*1000))
     byte_i = 0

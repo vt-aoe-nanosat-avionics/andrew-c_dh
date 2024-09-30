@@ -33,7 +33,7 @@
 #define BOOTLOADER_PING_OPCODE       ((uint8_t)0x00)
 #define BOOTLOADER_WRITE_PAGE_OPCODE ((uint8_t)0x02)
 #define BOOTLOADER_JUMP_OPCODE       ((uint8_t)0x0b)
-#define BOOTLOADER_SLEEP_OPCODE      ((uint8_t)0x0d)
+#define BOOTLOADER_POWER_OPCODE      ((uint8_t)0x0d)
 #define COMMON_ACK_OPCODE            ((uint8_t)0x10)
 #define COMMON_ASCII_OPCODE          ((uint8_t)0x11)
 #define COMMON_NACK_OPCODE           ((uint8_t)0xff)
@@ -42,6 +42,17 @@
 #define BOOTLOADER_ACK_REASON_PONG   ((uint8_t)0x00)
 #define BOOTLOADER_ACK_REASON_ERASED ((uint8_t)0x01)
 #define BOOTLOADER_ACK_REASON_JUMP   ((uint8_t)0xff)
+
+//// BOOTLOADER_POWER modes
+#define BOOTLOADER_POWER_RUN           ((uint8_t)0x00)
+#define BOOTLOADER_POWER_SLEEP         ((uint8_t)0x01)
+#define BOOTLOADER_POWER_LOWPOWERRUN   ((uint8_t)0x02)
+#define BOOTLOADER_POWER_LOWPOWERSLEEP ((uint8_t)0x03)
+#define BOOTLOADER_POWER_STOP0         ((uint8_t)0x04)
+#define BOOTLOADER_POWER_STOP1         ((uint8_t)0x05)
+#define BOOTLOADER_POWER_STOP2         ((uint8_t)0x06)
+#define BOOTLOADER_POWER_STANDBY       ((uint8_t)0x07)
+#define BOOTLOADER_POWER_SHUTDOWN      ((uint8_t)0x08)
 
 //// Destination IDs
 #define DEST_COMM ((uint8_t)0x01)
@@ -121,6 +132,9 @@ int bootloader_erase(void);
 
 //// Given a well-formed BOOTLOADER_WRITE_PAGE command, write data to flash
 int bootloader_write_data(rx_cmd_buff_t* rx_cmd_buff);
+
+//// Given a well-formed BOOTLOADER_POWER command, enter correspondng power mode
+int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff);
 
 // Protocol functions
 
