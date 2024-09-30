@@ -329,7 +329,7 @@ This command instructs the bootloader to
 Power bytes:
 
 | Power Mode      | Byte |
-| Run             | 0x00
+| Run             | 0x00 |
 | Sleep           | 0x01 |
 | --------------- | ---- |
 | Low-power run   | 0x02 |
