@@ -488,6 +488,27 @@ class TxCmd:
         self.data[MSG_LEN_INDEX] = 0x8a
         for i in range(0,len(page_data)):
           self.data[PLD_START_INDEX+4+i] = page_data[i]
+  def bootloader_power_select(self, mode):
+    if self.data[OPCODE_INDEX] == BOOTLOADER_POWER_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x07
+      if mode == "run":
+        self.data[PLD_START_INDEX] = 0x00
+      elif mode == "sleep":
+        self.data[PLD_START_INDEX] = 0x01
+      elif mode == "lowpowerrun":
+        self.data[PLD_START_INDEX] = 0x02
+      elif mode == "lowpowersleep":
+        self.data[PLD_START_INDEX] = 0x03
+      elif mode == "stop0":
+        self.data[PLD_START_INDEX] = 0x04
+      elif mode == "stop1":
+        self.data[PLD_START_INDEX] = 0x05
+      elif mode == "stop2":
+        self.data[PLD_START_INDEX] = 0x06
+      elif mode == "standby":
+        self.data[PLD_START_INDEX] = 0x07
+      elif mode == "shutdown":
+        self.data[PLD_START_INDEX] = 0x08
 
   def app_set_time(self, sec, ns):
     if self.data[OPCODE_INDEX] == APP_SET_TIME_OPCODE:

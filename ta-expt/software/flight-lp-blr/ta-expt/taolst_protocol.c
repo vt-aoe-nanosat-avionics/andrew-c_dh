@@ -9,10 +9,13 @@
 // Standard library
 #include <stddef.h>                 // size_t
 #include <stdint.h>                 // uint8_t, uint32_t, uint64_t
+#include <stdatomic.h>              // atomic types and operations
 
 // libopencm3 library
 #include <libopencm3/stm32/flash.h> // flash erase and write
 #include <libopencm3/stm32/usart.h> // USART functions
+#include <libopencm3/stm32/pwr.h>     // power control functions
+#include <libopencm3/cm3/nvic.h>    // used in init_uart
 
 // ta-expt library
 #include <bootloader.h>             // Bootloader macros
@@ -21,8 +24,8 @@
 // Variables
 extern int in_bootloader;    // Used in bootloader main to indicate MCU state
 extern int app_jump_pending; // Used in bootloader main to signal jump to app
-extern int power_mode;       // Used in bootloader main to indicate power mode
-extern int power_mode_pending; // Used in bootloader main to signal power mode change
+volatile int power_mode;       // Used in bootloader main to indicate power mode
+volatile int power_mode_pending; // Used in bootloader main to signal power mode change
 
 // Helper functions
 
@@ -117,14 +120,16 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
            power_mode==BOOTLOADER_POWER_STOP1 ||
            power_mode==BOOTLOADER_POWER_STOP2 ||
            power_mode==BOOTLOADER_POWER_STANDBY ||
-           power_mode==BOOTLOADER_POWER_SHUTDOWN) {
+           power_mode==BOOTLOADER_POWER_SHUTDOWN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_RUN;
           return 1;
         } else {
           return 0;
         }
       case BOOTLOADER_POWER_SLEEP:
-        if(power_mode==BOOTLOADER_POWER_RUN) {
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_SLEEP;
           return 1;
         } else {
@@ -135,21 +140,24 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
            power_mode==BOOTLOADER_POWER_LOWPOWERSLEEP ||
            power_mode==BOOTLOADER_POWER_STOP1 ||
            power_mode==BOOTLOADER_POWER_STANDBY ||
-           power_mode==BOOTLOADER_POWER_SHUTDOWN) {
+           power_mode==BOOTLOADER_POWER_SHUTDOWN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_LOWPOWERRUN;
           return 1;
         } else {
           return 0;
         }
       case BOOTLOADER_POWER_LOWPOWERSLEEP:
-        if(power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+        if(power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_LOWPOWERSLEEP;
           return 1;
         } else {
           return 0;
         }
       case BOOTLOADER_POWER_STOP0:
-        if(power_mode==BOOTLOADER_POWER_RUN) {
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_STOP0;
           return 1;
         } else {
@@ -157,14 +165,16 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
         }
       case BOOTLOADER_POWER_STOP1:
         if(power_mode==BOOTLOADER_POWER_RUN ||
-           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_STOP1;
           return 1;
         } else {
           return 0;
         }
       case BOOTLOADER_POWER_STOP2:
-        if(power_mode==BOOTLOADER_POWER_RUN) {
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_STOP2;
           return 1;
         } else {
@@ -172,7 +182,8 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
         }
       case BOOTLOADER_POWER_STANDBY:
         if(power_mode==BOOTLOADER_POWER_RUN ||
-           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_STANDBY;
           return 1;
         } else {
@@ -180,7 +191,8 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
         }
       case BOOTLOADER_POWER_SHUTDOWN:
         if(power_mode==BOOTLOADER_POWER_RUN ||
-           power_mode==BOOTLOADER_POWER_LOWPOWERRUN) {
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+           power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_SHUTDOWN;
           return 1;
         } else {
@@ -193,6 +205,69 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
     return 0;
   }
 }
+
+void move_power_mode(void) {  
+  if(power_mode != power_mode_pending) {
+    switch (power_mode_pending) {
+      case BOOTLOADER_POWER_RUN:
+        power_mode = BOOTLOADER_POWER_RUN;
+        break;
+      case BOOTLOADER_POWER_SLEEP:
+        usart_enable_rx_interrupt(USART1);
+        power_mode = BOOTLOADER_POWER_SLEEP;
+        pwr_enable_sleep_mode();
+        break;
+      case BOOTLOADER_POWER_LOWPOWERRUN:
+        power_mode = BOOTLOADER_POWER_LOWPOWERRUN;
+        break;
+      case BOOTLOADER_POWER_LOWPOWERSLEEP:
+        power_mode = BOOTLOADER_POWER_LOWPOWERSLEEP;
+        break;
+      case BOOTLOADER_POWER_STOP0:
+        usart_enable_rx_interrupt(USART1);
+        power_mode = BOOTLOADER_POWER_STOP0;
+        break;
+      case BOOTLOADER_POWER_STOP1:
+        power_mode = BOOTLOADER_POWER_STOP1;
+        break;
+      case BOOTLOADER_POWER_STOP2:
+        power_mode = BOOTLOADER_POWER_STOP2;
+        break;
+      case BOOTLOADER_POWER_STANDBY:
+        power_mode = BOOTLOADER_POWER_STANDBY;
+        pwr_enable_standby_mode();
+        break;
+      case BOOTLOADER_POWER_SHUTDOWN:
+        power_mode = BOOTLOADER_POWER_SHUTDOWN;
+        break;
+    }
+  }
+}
+
+void usart1_isr(void)
+{
+  /**
+  rx_cmd_buff_t rx_cmd_buff = {.size=CMD_MAX_LEN};
+  clear_rx_cmd_buff(&rx_cmd_buff);
+  tx_cmd_buff_t tx_cmd_buff = {.size=CMD_MAX_LEN};
+  clear_tx_cmd_buff(&tx_cmd_buff);
+
+    
+      rx_usart1(&rx_cmd_buff);                 // Collect command bytes
+      reply(&rx_cmd_buff, &tx_cmd_buff);       // Command reply logic
+      tx_usart1(&tx_cmd_buff);                 // Send a response if any
+      move_power_mode();
+
+  //*/
+  /** */
+  if (usart_get_flag(USART1, USART_ISR_RXNE))
+  {
+    usart_disable_rx_interrupt(USART1);
+    power_mode = BOOTLOADER_POWER_RUN;
+  }
+  //*/
+}
+
 
 // Protocol functions
 

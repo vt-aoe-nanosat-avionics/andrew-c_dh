@@ -53,6 +53,7 @@
 #define BOOTLOADER_POWER_STOP2         ((uint8_t)0x06)
 #define BOOTLOADER_POWER_STANDBY       ((uint8_t)0x07)
 #define BOOTLOADER_POWER_SHUTDOWN      ((uint8_t)0x08)
+#define BOOTLOADER_POWER_TEMP          ((uint8_t)0xff)
 
 //// Destination IDs
 #define DEST_COMM ((uint8_t)0x01)
@@ -133,8 +134,11 @@ int bootloader_erase(void);
 //// Given a well-formed BOOTLOADER_WRITE_PAGE command, write data to flash
 int bootloader_write_data(rx_cmd_buff_t* rx_cmd_buff);
 
-//// Given a well-formed BOOTLOADER_POWER command, enter correspondng power mode
+//// Given a well-formed BOOTLOADER_POWER command, queue correspondng power mode
 int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff);
+
+
+void move_power_mode(void);
 
 // Protocol functions
 

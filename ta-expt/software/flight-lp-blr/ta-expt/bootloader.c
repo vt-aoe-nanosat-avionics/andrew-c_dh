@@ -13,7 +13,6 @@
 #include <libopencm3/cm3/scb.h>     // SCB_VTOR
 #include <libopencm3/stm32/flash.h> // used in init_clock
 #include <libopencm3/stm32/gpio.h>  // used in init_gpio
-#include <libopencm3/stm32/pwr.h>   // used in set_rtc
 #include <libopencm3/stm32/rcc.h>   // used in init_clock, init_rtc
 #include <libopencm3/stm32/rtc.h>   // used in rtc functions
 #include <libopencm3/stm32/usart.h> // used in init_uart
@@ -25,9 +24,6 @@
 
 // Variables
 int rtc_set = 0; // Boolean; Zero until RTC date and time have been set
-
-extern int power_mode;       // Used in bootloader main to indicate power mode
-extern int power_mode_pending; // Used in bootloader main to signal power mode change
 
 // Initialization functions
 
@@ -80,6 +76,9 @@ void init_uart(void) {
   usart_set_mode(USART1,USART_MODE_TX_RX);
   usart_set_parity(USART1,USART_PARITY_NONE);
   usart_set_flow_control(USART1,USART_FLOWCONTROL_NONE);
+
+  nvic_enable_irq(NVIC_USART1_IRQ);
+
   usart_enable(USART1);
 }
 
@@ -238,39 +237,5 @@ void tx_usart1(tx_cmd_buff_t* tx_cmd_buff_o) {
   ) {                                                //
     uint8_t b = pop_tx_cmd_buff(tx_cmd_buff_o);      // Pop byte from TX buffer
     usart_send(USART1,b);                            // Send byte to TX pin
-  }
-  if(power_mode != power_mode_pending) {
-    usart_enable_rx_interrupt(USART1);
-    switch (power_mode_pending) {
-      case BOOTLOADER_POWER_RUN:
-        power_mode = BOOTLOADER_POWER_RUN;
-        break;
-      case BOOTLOADER_POWER_SLEEP:
-        power_mode = BOOTLOADER_POWER_SLEEP;
-        pwr_enable_sleep_mode();
-        break;
-      case BOOTLOADER_POWER_LOWPOWERRUN:
-        power_mode = BOOTLOADER_POWER_LOWPOWERRUN;
-        break;
-      case BOOTLOADER_POWER_LOWPOWERSLEEP:
-        power_mode = BOOTLOADER_POWER_LOWPOWERSLEEP;
-        break;
-      case BOOTLOADER_POWER_STOP0:
-        power_mode = BOOTLOADER_POWER_STOP0;
-        break;
-      case BOOTLOADER_POWER_STOP1:
-        power_mode = BOOTLOADER_POWER_STOP1;
-        break;
-      case BOOTLOADER_POWER_STOP2:
-        power_mode = BOOTLOADER_POWER_STOP2;
-        break;
-      case BOOTLOADER_POWER_STANDBY:
-        power_mode = BOOTLOADER_POWER_STANDBY;
-        pwr_enable_standby_mode();
-        break;
-      case BOOTLOADER_POWER_SHUTDOWN:
-        power_mode = BOOTLOADER_POWER_SHUTDOWN;
-        break;
-    }
   }
 }

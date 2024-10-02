@@ -57,7 +57,9 @@ msgid = 0x0000
 rx_cmd_buff = RxCmdBuff()
 
 while(1):
-  code = input(">")
+  command = input(">")
+  code = command.split(' ')[0]
+  opts = command.split(' ')[1:]
   if code == "common_ack":
     cmd = TxCmd(COMMON_ACK_OPCODE, HWID, msgid, GND, CDH)
     byte_i = 0
@@ -263,6 +265,7 @@ while(1):
 
   elif code == "bootloader_power":
     cmd = TxCmd(BOOTLOADER_POWER_OPCODE, HWID, msgid, GND, CDH)
+    cmd.bootloader_power_select(opts[0])
     byte_i = 0
     #while byte_i < cmd.get_byte_count():
     while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
