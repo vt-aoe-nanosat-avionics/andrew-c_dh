@@ -263,7 +263,7 @@ void usart1_isr(void)
   if (usart_get_flag(USART1, USART_ISR_RXNE))
   {
     usart_disable_rx_interrupt(USART1);
-    power_mode = BOOTLOADER_POWER_RUN;
+    power_mode = BOOTLOADER_POWER_TEMP;
   }
   //*/
 }
