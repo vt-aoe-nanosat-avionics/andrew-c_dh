@@ -43,15 +43,16 @@ int main(void) {
 
   // Bootloader loop
   while(1) {
+    while(!tx_cmd_buff.empty) {
+      tx_usart1(&tx_cmd_buff);               // finish sending response if any
+    }
+    
     if(!app_jump_pending) {
       move_power_mode();
       rx_usart1(&rx_cmd_buff);                 // Collect command bytes
       reply(&rx_cmd_buff, &tx_cmd_buff);       // Command reply logic
       tx_usart1(&tx_cmd_buff);                 // Send a response if any
     } else if(bl_check_app()) {                // Jump triggered; do basic check
-      while(!tx_cmd_buff.empty) {              // If jumping to user app,
-        tx_usart1(&tx_cmd_buff);               // finish sending response if any
-      }
       for(size_t i=0; i<4000000; i++) {        // Wait for UART TX FIFO to flush
         __asm__ volatile("nop");
       }
