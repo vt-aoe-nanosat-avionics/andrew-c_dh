@@ -267,7 +267,6 @@ while(1):
     cmd = TxCmd(BOOTLOADER_POWER_OPCODE, HWID, msgid, GND, CDH)
     cmd.bootloader_power_select(opts[0])
     byte_i = 0
-    #while byte_i < cmd.get_byte_count():
     while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
       if byte_i < cmd.get_byte_count():
         serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
