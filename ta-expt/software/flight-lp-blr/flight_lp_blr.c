@@ -43,9 +43,6 @@ int main(void) {
 
   // Bootloader loop
   while(1) {
-      while(!tx_cmd_buff.empty) {              // If jumping to user app,
-        tx_usart1(&tx_cmd_buff);               // finish sending response if any
-      }
     if(!app_jump_pending) {
       move_power_mode(&tx_cmd_buff);           // Power mode change
       rx_usart1(&rx_cmd_buff);                 // Collect command bytes
