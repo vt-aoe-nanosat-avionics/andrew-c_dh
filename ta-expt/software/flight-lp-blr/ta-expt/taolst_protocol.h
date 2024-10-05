@@ -138,7 +138,7 @@ int bootloader_write_data(rx_cmd_buff_t* rx_cmd_buff);
 int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff);
 
 
-void move_power_mode(void);
+void move_power_mode(tx_cmd_buff_t* tx_cmd_buff);
 
 // Protocol functions
 

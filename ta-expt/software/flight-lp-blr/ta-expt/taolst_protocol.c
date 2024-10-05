@@ -206,8 +206,11 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
   }
 }
 
-void move_power_mode(void) {  
+void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {  
   if(power_mode != power_mode_pending) {
+    while(!tx_cmd_buff->empty) {
+      tx_usart1(tx_cmd_buff);               // finish sending response if any
+    }
     switch (power_mode_pending) {
       case BOOTLOADER_POWER_RUN:
         power_mode = BOOTLOADER_POWER_RUN;
@@ -226,19 +229,27 @@ void move_power_mode(void) {
       case BOOTLOADER_POWER_STOP0:
         usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_STOP0;
+        pwr_enable_stop0_mode();
         break;
       case BOOTLOADER_POWER_STOP1:
+        usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_STOP1;
+        pwr_enable_stop1_mode();
         break;
       case BOOTLOADER_POWER_STOP2:
+        usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_STOP2;
+        pwr_enable_stop2_mode();
         break;
       case BOOTLOADER_POWER_STANDBY:
+        usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_STANDBY;
         pwr_enable_standby_mode();
         break;
       case BOOTLOADER_POWER_SHUTDOWN:
+        usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_SHUTDOWN;
+        pwr_enable_shutdown_mode();
         break;
     }
   }
