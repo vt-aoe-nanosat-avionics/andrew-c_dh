@@ -22,7 +22,7 @@
 // ta-expt library
 #include <bootloader.h>             // Header file
 #include <taolst_protocol.h>        // TAOLST protocol macros, typedefs, fnctns
-#include <IS25LP128F.h>
+#include <IS25LP128F.h>             // IS25LP128F flash memory macros
 
 // Variables
 int rtc_set = 0; // Boolean; Zero until RTC date and time have been set
