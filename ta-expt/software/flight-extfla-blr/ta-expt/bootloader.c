@@ -11,16 +11,18 @@
 
 // libopencm3 library
 #include <libopencm3/cm3/scb.h>     // SCB_VTOR
+#include <libopencm3/cm3/nvic.h>    // used in init_uart
 #include <libopencm3/stm32/flash.h> // used in init_clock
 #include <libopencm3/stm32/gpio.h>  // used in init_gpio
 #include <libopencm3/stm32/rcc.h>   // used in init_clock, init_rtc
 #include <libopencm3/stm32/rtc.h>   // used in rtc functions
 #include <libopencm3/stm32/usart.h> // used in init_uart
-#include <libopencm3/cm3/nvic.h>    // used in init_uart
+#include <libopenmc3/stm32/quadspi.h> // used in init_extern_flash
 
 // ta-expt library
 #include <bootloader.h>             // Header file
 #include <taolst_protocol.h>        // TAOLST protocol macros, typedefs, fnctns
+#include <IS25LP128F.h>
 
 // Variables
 int rtc_set = 0; // Boolean; Zero until RTC date and time have been set
@@ -92,6 +94,24 @@ void init_rtc(void) {
   rtc_wait_for_synchro();
   pwr_enable_backup_domain_write_protect();
   rtc_set = 0;                       // RTC date and time has not yet been set
+}
+
+void init_extern_flash(void) {
+  quadspi_disable();
+  quadspi_set_flash_size(23); // 128 Mbit = 16 Mbyte = 2^(n+1) // n = 23
+  quadspi_set_high_time(6);   // 1/2 clock cycle
+  quadspi_set_prescaler(0);   // 1:1 prescaler
+  quadspi_enable_sample_shift();
+	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
+
+  quadspi_send_instruction(IS25LP128F_CMD_RESET_ENABLE, QUADSPI_CCR_MODE_1LINE);
+  quadspi_send_instruction(IS25LP128F_CMD_RESET, QUADSPI_CCR_MODE_1LINE);
+
+  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
+  quadspi_write_register(IS25LP128F_CMD_WRITE_READ_PARAMETERS, QUADSPI_CCR_MODE_1LINE, 0x09 << 4);
+
+  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
+  quadspi_send_instruction(IS25LP128F_CMD_ENTER_QPI_MODE, QUADSPI_CCR_MODE_1LINE);
 }
 
 // Utility functions
