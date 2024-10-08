@@ -11,21 +11,58 @@
 | Standby           | LPMS=011 & SLEEPDEEP bit & WFI/Return from ISR or WFE | WKUP pin edge, RTC event, NRST pin, IWDG reset           | Only LSI and LSE enabled |
 | Shutdown          | LPMS=1-- & SLEEPDEEP bit & WFI/Return from ISR or WFE | WKUP pin edge, RTC event, NRST pin                       | Only LSE enabled         |
 
-* Definitions:
+* #### Definitions:
     * WFI - Wait for interrupt assembly command
     * WFE - Wait for event assembly command
     * Return from ISR - Returning from any interrupt function
-    * Wakeup Event - 
+    * Wakeup Event - Wakeup events can be configured to occur for many reasons, and are very abstract
     * LSI - Low speed internal clock
     * LSE - Low speed external clock
-    * WKUP pin - 
+    * WKUP pin - Certain GPIO pins are able to wakeup the CPU on an edge detection
     * NRST pin - Pin on the board that force resets the CPU without power cycling
     * EXTI line - External interrupt on GPIO pins that are activated by pulling the pin high or low
 
 ## Caveats
+* **Low-power sleep**: In order to enter low-power sleep, the CPU must first be in low-power run mode
 * **Stop modes**: All 3 of these modes persist through power cycles, so turning the board on and off again will not put it back into run mode, it will stay in the mode it was before it lost power
 * **Standby and Shutdown modes**: These modes also require clearing WUF bits in power status register 1 (PWR_SR1)
     * **Power status register 1 is read-only, so they are cleared by writing a 1 to the CWUF bits in the power status clear register (PWR_SCR)**
+
+## Example
+
+#### blink-timer-low-power.c
+```C
+int main(void) {
+  /** Setup GPIO pins to control LEDs */
+  rcc_periph_clock_enable(RCC_GPIOC);
+  gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO10);
+  gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12);
+  gpio_set(GPIOC, GPIO10);
+  gpio_clear(GPIOC, GPIO12);
+
+  /** Setup the timer to call the interrupt */
+  rcc_periph_clock_enable(RCC_TIM2);
+  timer_set_mode(TIM2, TIM_CR1_CKD_CK_INT_MUL_2, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
+  timer_set_period(TIM2, 1250000);
+  timer_enable_irq(TIM2, TIM_DIER_UIE);
+  nvic_enable_irq(NVIC_TIM2_IRQ);
+  timer_enable_counter(TIM2);
+
+  /** Enable sleep mode */
+  scb_clear_sleepdeep();        // Clear SLEEPDEEP bit to make sure the MCU goes into the correct power mode
+  scb_set_sleeponexit();        // Enable sleep when exiting from an interrupt
+
+  __asm__("wfi");               // Wait for the first interrupt
+}
+
+/** Timer Interrupt */
+void tim2_isr(void) {
+  timer_clear_flag(TIM2, TIM_SR_UIF);   // clear flag so timer will continue counting
+  gpio_toggle(GPIOC, GPIO10);           // blinks LED
+  gpio_toggle(GPIOC, GPIO12);           // blinks LED
+}
+
+```
 
 ## Registers
 
@@ -39,7 +76,7 @@
 * **SLEEPDEEP**: Controls whether the processor uses sleep or deep sleep as its power mode
     * 0: Sleep
     * 1: Deep sleep
-* **SLEEPONEXIT**: Configures teh CPU to automatically go to sleep when returning from an interrupt (Return from ISR)
+* **SLEEPONEXIT**: Configures the CPU to automatically go to sleep when returning from an interrupt (Return from ISR)
     * 0: Do not sleep when returning from an interrupt
     * 1: Enter sleep or deep sleep when returning from an interrupt
 
@@ -49,7 +86,7 @@
 |:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |
 |**15**|**14**|**13**|**12**|**11**|**10**|**9**|**8**|**7**|**6**|**5**|**4**|**3**|**2**|**1**|**0**|
-|  X | LPR |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  LPMS[2:0] |||
+|  X | LPR |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  LPMS[2] |LPMS[1]|LPMS[0]|
 * **LPR**: Low-power run
     * When this bit is set, the regulator is switched from main mode to low-power mode
 
@@ -88,7 +125,7 @@ Using these 3 registers we can change the power mode of the MCU
 | Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.38 mA  |
 | Low-power Run     |       :x:        |        :x:       |         :x:             |:question:|
 | Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
-| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
+| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress | 0.13 mA     |
 | Stop 1            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
 | Stop 2            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
 | Standby           |:heavy_check_mark:|        :x:       |         :x:             |     |
