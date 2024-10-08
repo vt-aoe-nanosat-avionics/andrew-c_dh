@@ -20,7 +20,7 @@
     * LSE - Low speed external clock
     * WKUP pin - 
     * NRST pin - Pin on the board that force resets the CPU without power cycling
-    * EXTI line -
+    * EXTI line - External interrupt on GPIO pins that are activated by pulling the pin high or low
 
 ## Caveats
 * **Stop modes**: All 3 of these modes persist through power cycles, so turning the board on and off again will not put it back into run mode, it will stay in the mode it was before it lost power
@@ -31,9 +31,9 @@
 
 ### System Control Register: SCB_SCR
 | 31 | 30 | 29 | 28 | 27 | 26 | 25 | 24 | 23 | 22 | 21 | 20 | 19 | 18 | 17 | 16 |
-|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |
-| 15 | 14 | 13 | 12 | 11 | 10 | 9  | 8  | 7  | 6  | 5  | 4  | 3  | 2  | 1  | 0  |
+|**15**|**14**|**13**|**12**|**11**|**10**|**9**|**8**|**7**|**6**|**5**|**4**|**3**|**2**|**1**|**0**|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X | SLEEPDEEP | SLEEPONEXIT |  X |
 
 * **SLEEPDEEP**: Controls whether the processor uses sleep or deep sleep as its power mode
@@ -46,9 +46,9 @@
 
 ### Power Control 1 Register: PWR_CR1
 | 31 | 30 | 29 | 28 | 27 | 26 | 25 | 24 | 23 | 22 | 21 | 20 | 19 | 18 | 17 | 16 |
-|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |
-| 15 | 14 | 13 | 12 | 11 | 10 | 9  | 8  | 7  | 6  | 5  | 4  | 3  | 2  | 1  | 0  |
+|**15**|**14**|**13**|**12**|**11**|**10**|**9**|**8**|**7**|**6**|**5**|**4**|**3**|**2**|**1**|**0**|
 |  X | LPR |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  LPMS[2:0] |||
 * **LPR**: Low-power run
     * When this bit is set, the regulator is switched from main mode to low-power mode
@@ -61,9 +61,9 @@
 
 ### Power Status Clear Register: PWR_SCR
 | 31 | 30 | 29 | 28 | 27 | 26 | 25 | 24 | 23 | 22 | 21 | 20 | 19 | 18 | 17 | 16 |
-|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |
-| 15 | 14 | 13 | 12 | 11 | 10 | 9  | 8  | 7  | 6  | 5  | 4  | 3  | 2  | 1  | 0  |
+|**15**|**14**|**13**|**12**|**11**|**10**|**9**|**8**|**7**|**6**|**5**|**4**|**3**|**2**|**1**|**0**|
 |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X |  X | CWUF5 | CWUF4 | CWUF3 | CWUF2 | CWUF1 |
 
 * **CWUF5**
@@ -82,15 +82,15 @@ Using these 3 registers we can change the power mode of the MCU
 
 ## Power Modes in TAB
 
-| Mode              | Entry | Confirmation | Wakeup           | Power Usage |
-| ----------------- | ----- | ------------ | ---------------- | ----------- |
-| Run               |- [x]  |    - [x]     |- [x] Usart       |       ?     |
-| Sleep             |- [x]  |    - [x]     |- [x] Usart       |       ?     |
-| Low-power Run     |- [ ]  |    - [ ]     |- [ ]             |       ?     |
-| Low-power Sleep   |- [ ]  |    - [ ]     |- [ ]             |       ?     |
-| Stop 0            |- [x]  |    - [ ]     |- [ ] In Progress |       ?     |
-| Stop 1            |- [x]  |    - [ ]     |- [ ] In Progress |       ?     |
-| Stop 2            |- [x]  |    - [ ]     |- [ ] In Progress |       ?     |
-| Standby           |- [x]  |    - [x]     |- [ ]             |       ?     |
-| Shutdown          |- [x]  |    - [ ]     |- [ ]             |       ?     |
+| Mode              |       Entry      | Confirmation     | Wakeup                  | Power Usage |
+|:-----------------:|:----------------:|:----------------:|:-----------------------:|:-----------:|
+| Run               |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 11.53 mA |
+| Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.38 mA  |
+| Low-power Run     |       :x:        |        :x:       |         :x:             |:question:|
+| Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
+| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
+| Stop 1            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
+| Stop 2            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
+| Standby           |:heavy_check_mark:|        :x:       |         :x:             |     |
+| Shutdown          |:heavy_check_mark:|        :x:       |         :x:             |       ?     |
 
