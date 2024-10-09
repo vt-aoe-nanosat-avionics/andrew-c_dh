@@ -61,8 +61,8 @@ void tim2_isr(void) {
   gpio_toggle(GPIOC, GPIO10);           // blinks LED
   gpio_toggle(GPIOC, GPIO12);           // blinks LED
 }
-
 ```
+This file blinks the LEDs identically to blink-timer.c while reducing the power consumption
 
 ## Registers
 
@@ -125,9 +125,9 @@ Using these 3 registers we can change the power mode of the MCU
 | Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.38 mA  |
 | Low-power Run     |       :x:        |        :x:       |         :x:             |:question:|
 | Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
-| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress | 0.13 mA     |
+| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress | 130 uA     |
 | Stop 1            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
 | Stop 2            |:heavy_check_mark:|        :x:       |         :x: In Progress |       ?     |
-| Standby           |:heavy_check_mark:|        :x:       |         :x:             |     |
+| Standby           |:heavy_check_mark:|        :x:       |         :x:             | 9.6 uA    |
 | Shutdown          |:heavy_check_mark:|        :x:       |         :x:             |       ?     |
 
