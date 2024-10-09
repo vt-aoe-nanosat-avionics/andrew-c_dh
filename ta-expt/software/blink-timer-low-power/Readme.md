@@ -27,6 +27,7 @@
 * **Stop modes**: All 3 of these modes persist through power cycles, so turning the board on and off again will not put it back into run mode, it will stay in the mode it was before it lost power
 * **Standby and Shutdown modes**: These modes also require clearing WUF bits in power status register 1 (PWR_SR1)
     * **Power status register 1 is read-only, so they are cleared by writing a 1 to the CWUF bits in the power status clear register (PWR_SCR)**
+* If the board gets stuck in any power mode, it cannot be flashed the same way. The only way to flash a board that is in a low power mode is to pull the NRST pin to GND, then pull the BOOT pin to 3.3V, and then removing the GND from the NRST pin. This will force the board into bootmode where it can be flashed
 
 ## Example
 
