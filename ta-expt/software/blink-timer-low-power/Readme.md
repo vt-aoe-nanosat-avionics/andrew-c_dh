@@ -126,7 +126,7 @@ Using these 3 registers we can change the power mode of the MCU
 | Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.38 mA  |
 | Low-power Run     |       :x:        |        :x:       |         :x:             |:question:|
 | Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
-| Stop 0            |:heavy_check_mark:|        :x:       |         :x: In Progress | 133.7 uA     |
+| Stop 0            |:check_mark:|        :x:       |         :x: In Progress | 133.7 uA     |
 | Stop 1            |:heavy_check_mark:|        :x:       |         :x: In Progress | 20.1 uA     |
 | Stop 2            |:heavy_check_mark:|        :x:       |         :x: In Progress | 11.9 uA     |
 | Standby           |:heavy_check_mark:|        :x:       |         :x:             | 9.6 uA    |
