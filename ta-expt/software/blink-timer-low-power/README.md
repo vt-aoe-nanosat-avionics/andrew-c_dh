@@ -128,8 +128,8 @@ Using these 3 registers we can change the power mode of the MCU
 | Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
 | Stop 0            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 1.40 mA     |
 | Stop 1            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 1.28 mA     |
-| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|         :x: In Progress | 1.28 mA     |
-| Standby           |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.25 mA    |
-| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.38 mA     |
+| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 1.28 mA     |
+| Standby           |:heavy_check_mark:|:heavy_check_mark:|     :x: Problems        | 0.25 mA    |
+| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|     :x: Problems        | 0.38 mA     |
 
 ![Power Consmption bar Chart!](./image.png)
