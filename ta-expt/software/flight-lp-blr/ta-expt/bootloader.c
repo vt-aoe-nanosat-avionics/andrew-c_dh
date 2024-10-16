@@ -16,6 +16,7 @@
 #include <libopencm3/stm32/rcc.h>   // used in init_clock, init_rtc
 #include <libopencm3/stm32/rtc.h>   // used in rtc functions
 #include <libopencm3/stm32/usart.h> // used in init_uart
+#include <libopencm3/stm32/exti.h>  // used in init_exti
 #include <libopencm3/cm3/nvic.h>    // used in init_uart
 
 // ta-expt library
@@ -80,6 +81,21 @@ void init_uart(void) {
   nvic_enable_irq(NVIC_USART1_IRQ);
 
   usart_enable(USART1);
+}
+
+void init_exti(void) {
+  rcc_periph_clock_enable(RCC_SYSCFG);     // Enable system configuration
+  nvic_clear_pending_irq(NVIC_EXTI15_10_IRQ);
+  rcc_periph_clock_enable(RCC_GPIOC);
+  nvic_enable_irq(NVIC_EXTI15_10_IRQ);
+  gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
+  gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO13);
+  exti_select_source(EXTI13, GPIOC);
+  exti_set_trigger(EXTI13, EXTI_TRIGGER_RISING);
+  //exti_enable_request(EXTI13);
+  EXTI_EMR |= EXTI13;
+  RCC_CFGR |= RCC_CFGR_STOPWUCK_HSI16;     // HSI16 is wakeup clock
+  rcc_periph_clock_disable(RCC_SYSCFG);    // Disable system configuration
 }
 
 void init_rtc(void) {

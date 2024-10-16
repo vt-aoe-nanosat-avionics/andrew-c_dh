@@ -29,6 +29,7 @@ void init_clock(void);
 void init_led(void);
 void init_uart(void);
 void init_rtc(void);
+void init_exti(void);
 
 // Utility functions
 

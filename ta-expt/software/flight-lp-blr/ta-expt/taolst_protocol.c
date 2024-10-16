@@ -14,7 +14,10 @@
 // libopencm3 library
 #include <libopencm3/stm32/flash.h> // flash erase and write
 #include <libopencm3/stm32/usart.h> // USART functions
+#include <libopencm3/stm32/rcc.h>    // reset and clock control functions
 #include <libopencm3/stm32/pwr.h>     // power control functions
+#include <libopencm3/stm32/gpio.h>    // GPIO functions
+#include <libopencm3/stm32/exti.h>     // EXTI functions
 #include <libopencm3/cm3/nvic.h>    // used in init_uart
 
 // ta-expt library
@@ -227,27 +230,87 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         power_mode = BOOTLOADER_POWER_LOWPOWERSLEEP;
         break;
       case BOOTLOADER_POWER_STOP0:
-        usart_enable_rx_interrupt(USART1);
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        init_exti();
         power_mode = BOOTLOADER_POWER_STOP0;
         pwr_enable_stop0_mode();
+
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+
+        init_clock();
+        init_uart();
+
+        power_mode = BOOTLOADER_POWER_RUN;
+        power_mode_pending = BOOTLOADER_POWER_RUN;
+        static int led = -1;
+        led++;
+        if (led == 0)
+        {
+          gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO10);
+          gpio_set(GPIOC, GPIO10);
+        }
+        else if (led%2 == 1)
+        {
+          gpio_clear(GPIOC, GPIO10);
+        }
+        else
+        {
+          gpio_set(GPIOC, GPIO10);
+        }
         break;
       case BOOTLOADER_POWER_STOP1:
-        usart_enable_rx_interrupt(USART1);
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        init_exti();
         power_mode = BOOTLOADER_POWER_STOP1;
         pwr_enable_stop1_mode();
+
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+
+        init_clock();
+        init_uart();
+
+        power_mode = BOOTLOADER_POWER_RUN;
+        power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
       case BOOTLOADER_POWER_STOP2:
-        usart_enable_rx_interrupt(USART1);
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        init_exti();
         power_mode = BOOTLOADER_POWER_STOP2;
         pwr_enable_stop2_mode();
+
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+
+        init_clock();
+        init_uart();
+
+        power_mode = BOOTLOADER_POWER_RUN;
+        power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
       case BOOTLOADER_POWER_STANDBY:
-        usart_enable_rx_interrupt(USART1);
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        PWR_CR3 |= PWR_CR3_EWUP2;
         power_mode = BOOTLOADER_POWER_STANDBY;
         pwr_enable_standby_mode();
         break;
       case BOOTLOADER_POWER_SHUTDOWN:
-        usart_enable_rx_interrupt(USART1);
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        PWR_CR3 |= PWR_CR3_EWUP2;
         power_mode = BOOTLOADER_POWER_SHUTDOWN;
         pwr_enable_shutdown_mode();
         break;
@@ -277,6 +340,20 @@ void usart1_isr(void)
     power_mode = BOOTLOADER_POWER_TEMP;
   }
   //*/
+}
+
+void exti15_10_isr(void)
+{
+  init_clock();
+  init_uart();
+
+	exti_reset_request(EXTI13);
+  nvic_clear_pending_irq(NVIC_EXTI15_10_IRQ);
+
+  power_mode = BOOTLOADER_POWER_RUN;
+  power_mode_pending = BOOTLOADER_POWER_RUN;
+  gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO10);
+  gpio_set(GPIOC, GPIO10);
 }
 
 
