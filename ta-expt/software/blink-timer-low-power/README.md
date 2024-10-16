@@ -126,10 +126,10 @@ Using these 3 registers we can change the power mode of the MCU
 | Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.36 mA  |
 | Low-power Run     |       :x:        |        :x:       |         :x:             |:question:|
 | Low-power Sleep   |       :x:        |        :x:       |         :x:             |:question:|
-| Stop 0            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 141.0 uA     |
-| Stop 1            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 20.1 uA     |
-| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|         :x: In Progress | 11.9 uA     |
-| Standby           |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 9.6 uA    |
-| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 9.0 uA     |
+| Stop 0            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 1.40 mA     |
+| Stop 1            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 1.28 mA     |
+| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|         :x: In Progress | 1.28 mA     |
+| Standby           |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.25 mA    |
+| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.38 mA     |
 
-[!Power Consmption bar Chart!](./image.png)
+![Power Consmption bar Chart!](./image.png)
