@@ -236,6 +236,7 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP0;
         pwr_enable_stop0_mode();
+        __asm__("wfe");
 
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
@@ -269,6 +270,7 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP1;
         pwr_enable_stop1_mode();
+        __asm__("wfe");
 
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
@@ -287,6 +289,7 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP2;
         pwr_enable_stop2_mode();
+        __asm__("wfe");
 
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
@@ -303,8 +306,10 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
           __asm__("nop");
         }
         PWR_CR3 |= PWR_CR3_EWUP2;
+        PWR_CR4 = 0;
         power_mode = BOOTLOADER_POWER_STANDBY;
         pwr_enable_standby_mode();
+        __asm__("wfe");
         break;
       case BOOTLOADER_POWER_SHUTDOWN:
         for(int i = 0; i < 40000; i++) {
@@ -313,6 +318,7 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         PWR_CR3 |= PWR_CR3_EWUP2;
         power_mode = BOOTLOADER_POWER_SHUTDOWN;
         pwr_enable_shutdown_mode();
+        __asm__("wfe");
         break;
     }
   }

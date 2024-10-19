@@ -54,6 +54,7 @@ void init_clock(void) {
   rcc_ahb_frequency = 80000000;
   rcc_apb1_frequency = 40000000;
   rcc_apb2_frequency = 80000000;
+  rcc_periph_clock_enable(RCC_GPIOC);
 }
 
 void init_led(void) {
@@ -86,10 +87,10 @@ void init_uart(void) {
 void init_exti(void) {
   rcc_periph_clock_enable(RCC_SYSCFG);     // Enable system configuration
   nvic_clear_pending_irq(NVIC_EXTI15_10_IRQ);
-  rcc_periph_clock_enable(RCC_GPIOC);
+  //rcc_periph_clock_enable(RCC_GPIOC);
   nvic_enable_irq(NVIC_EXTI15_10_IRQ);
   gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
-  gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO13);
+  //gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO13);
   exti_select_source(EXTI13, GPIOC);
   exti_set_trigger(EXTI13, EXTI_TRIGGER_RISING);
   //exti_enable_request(EXTI13);
