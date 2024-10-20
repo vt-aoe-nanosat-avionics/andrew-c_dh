@@ -19,6 +19,7 @@
 #include <libopencm3/stm32/gpio.h>    // GPIO functions
 #include <libopencm3/stm32/exti.h>     // EXTI functions
 #include <libopencm3/cm3/nvic.h>    // used in init_uart
+#include <libopencm3/cm3/scb.h>    // used in init_uart
 
 // ta-expt library
 #include <bootloader.h>             // Bootloader macros
@@ -218,63 +219,60 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
       case BOOTLOADER_POWER_RUN:
         power_mode = BOOTLOADER_POWER_RUN;
         break;
+
+
       case BOOTLOADER_POWER_SLEEP:
         usart_enable_rx_interrupt(USART1);
         power_mode = BOOTLOADER_POWER_SLEEP;
-        pwr_enable_sleep_mode();
+        //pwr_enable_sleep_mode();
+        scb_clear_sleepdeep();
+        pwr_disable_low_power_run();
+        __asm__("wfi");
         break;
+
+
       case BOOTLOADER_POWER_LOWPOWERRUN:
         power_mode = BOOTLOADER_POWER_LOWPOWERRUN;
         break;
+
+
       case BOOTLOADER_POWER_LOWPOWERSLEEP:
         power_mode = BOOTLOADER_POWER_LOWPOWERSLEEP;
         break;
+
+
       case BOOTLOADER_POWER_STOP0:
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP0;
-        pwr_enable_stop0_mode();
-        __asm__("wfe");
 
-        for(int i = 0; i < 40000; i++) {
-          __asm__("nop");
-        }
+        scb_set_sleepdeep();
+        pwr_set_low_power_mode_selection(PWR_CR1_LPMS_STOP_0);
+        __asm__("wfe");
+        __asm__("wfe");
 
         init_clock();
         init_uart();
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
-        static int led = -1;
-        led++;
-        if (led == 0)
-        {
-          gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO10);
-          gpio_set(GPIOC, GPIO10);
-        }
-        else if (led%2 == 1)
-        {
-          gpio_clear(GPIOC, GPIO10);
-        }
-        else
-        {
-          gpio_set(GPIOC, GPIO10);
-        }
         break;
+
+
       case BOOTLOADER_POWER_STOP1:
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP1;
-        pwr_enable_stop1_mode();
+
+        scb_set_sleepdeep();
+        pwr_set_low_power_mode_selection(PWR_CR1_LPMS_STOP_1);
+        __asm__("wfe");
         __asm__("wfe");
 
-        for(int i = 0; i < 40000; i++) {
-          __asm__("nop");
-        }
 
         init_clock();
         init_uart();
@@ -282,18 +280,19 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
+
+
       case BOOTLOADER_POWER_STOP2:
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
         init_exti();
         power_mode = BOOTLOADER_POWER_STOP2;
-        pwr_enable_stop2_mode();
-        __asm__("wfe");
 
-        for(int i = 0; i < 40000; i++) {
-          __asm__("nop");
-        }
+        scb_set_sleepdeep();
+        pwr_set_low_power_mode_selection(PWR_CR1_LPMS_STOP_2);
+        __asm__("wfe");
+        __asm__("wfe");
 
         init_clock();
         init_uart();
@@ -301,24 +300,61 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
+
+
       case BOOTLOADER_POWER_STANDBY:
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
+        PWR_SCR |= PWR_SCR_CWUF5;
+        PWR_SCR |= PWR_SCR_CWUF4;
+        PWR_SCR |= PWR_SCR_CWUF3;
+        PWR_SCR |= PWR_SCR_CWUF2;
+        PWR_SCR |= PWR_SCR_CWUF1;
+
         PWR_CR3 |= PWR_CR3_EWUP2;
         PWR_CR4 = 0;
+        gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
         power_mode = BOOTLOADER_POWER_STANDBY;
-        pwr_enable_standby_mode();
+
+        scb_set_sleepdeep();
+        pwr_set_low_power_mode_selection(PWR_CR1_LPMS_STANDBY);
         __asm__("wfe");
+        __asm__("wfe");
+
+        init_clock();
+        init_uart();
+
+        power_mode = BOOTLOADER_POWER_RUN;
+        power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
+
       case BOOTLOADER_POWER_SHUTDOWN:
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
+        PWR_SCR |= PWR_SCR_CWUF5;
+        PWR_SCR |= PWR_SCR_CWUF4;
+        PWR_SCR |= PWR_SCR_CWUF3;
+        PWR_SCR |= PWR_SCR_CWUF2;
+        PWR_SCR |= PWR_SCR_CWUF1;
+        
         PWR_CR3 |= PWR_CR3_EWUP2;
+        PWR_CR4 = 0;
+        gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
         power_mode = BOOTLOADER_POWER_SHUTDOWN;
-        pwr_enable_shutdown_mode();
+
+        scb_set_sleepdeep();
+        pwr_set_low_power_mode_selection(PWR_CR1_LPMS_SHUTDOWN);
         __asm__("wfe");
+        __asm__("wfe");
+
+
+        init_clock();
+        init_uart();
+
+        power_mode = BOOTLOADER_POWER_RUN;
+        power_mode_pending = BOOTLOADER_POWER_RUN;
         break;
     }
   }
