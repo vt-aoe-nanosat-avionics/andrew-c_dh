@@ -232,7 +232,26 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
 
 
       case BOOTLOADER_POWER_LOWPOWERRUN:
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        rcc_set_sysclk_source(RCC_CFGR_SW_HSI16); // Sets sysclk source for RTOS
+        rcc_osc_off(RCC_PLL);                      // 80 MHz PLL
+        rcc_wait_for_osc_ready(RCC_PLL);          // Wait until PLL is ready
+        rcc_set_main_pll(                         // Setup 80 MHz clock
+        RCC_PLLCFGR_PLLSRC_HSI16,                // PLL clock source
+        8,                                       // PLL VCO division factor
+        8,                                      // PLL VCO multiplication factor
+        0,                                       // PLL P clk output division factor
+        0,                                       // PLL Q clk output division factor
+        RCC_PLLCFGR_PLLR_DIV8                    // PLL sysclk output division factor
+        ); // 16MHz/8 = 2MHz; 2MHz*8 = 16MHz VCO; 16MHz/8 = 2MHz PLL
+        rcc_osc_on(RCC_PLL);                      // 2 MHz PLL
+        rcc_wait_for_osc_ready(RCC_PLL);          // Wait until PLL is ready
+        rcc_set_sysclk_source(RCC_CFGR_SW_PLL);   // Sets sysclk source for RTOS
+        rcc_wait_for_sysclk_status(RCC_PLL);
         power_mode = BOOTLOADER_POWER_LOWPOWERRUN;
+        pwr_enable_low_power_run();
         break;
 
 
@@ -338,7 +357,7 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         PWR_SCR |= PWR_SCR_CWUF3;
         PWR_SCR |= PWR_SCR_CWUF2;
         PWR_SCR |= PWR_SCR_CWUF1;
-        
+
         PWR_CR3 |= PWR_CR3_EWUP2;
         PWR_CR4 = 0;
         gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
