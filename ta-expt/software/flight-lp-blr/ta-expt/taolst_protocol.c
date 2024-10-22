@@ -152,7 +152,8 @@ int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff) {
           return 0;
         }
       case BOOTLOADER_POWER_LOWPOWERSLEEP:
-        if(power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
+        if(power_mode==BOOTLOADER_POWER_RUN ||
+           power_mode==BOOTLOADER_POWER_LOWPOWERRUN ||
            power_mode==BOOTLOADER_POWER_TEMP) {
           power_mode_pending = BOOTLOADER_POWER_LOWPOWERSLEEP;
           return 1;
@@ -217,6 +218,22 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
     }
     switch (power_mode_pending) {
       case BOOTLOADER_POWER_RUN:
+        if(power_mode == BOOTLOADER_POWER_LOWPOWERRUN) {
+          rcc_set_main_pll(                         // Setup 80 MHz clock
+          RCC_PLLCFGR_PLLSRC_HSI16,                // PLL clock source
+          4,                                       // PLL VCO division factor
+          40,                                      // PLL VCO multiplication factor
+          0,                                       // PLL P clk output division factor
+          0,                                       // PLL Q clk output division factor
+          RCC_PLLCFGR_PLLR_DIV2                    // PLL sysclk output division factor
+          ); // 16MHz/4 = 4MHz; 4MHz*40 = 160MHz VCO; 160MHz/2 = 80MHz PLL
+          rcc_osc_on(RCC_PLL);                      // 80 MHz PLL
+          rcc_wait_for_osc_ready(RCC_PLL);          // Wait until PLL is ready
+          rcc_set_sysclk_source(RCC_CFGR_SW_PLL);   // Sets sysclk source for RTOS
+          rcc_wait_for_sysclk_status(RCC_PLL);
+          rcc_osc_off(RCC_MSI);                      // 1 MHz MSI
+          rcc_wait_for_osc_ready(RCC_MSI);          // Wait until MSI is ready
+        }
         power_mode = BOOTLOADER_POWER_RUN;
         break;
 
@@ -235,28 +252,38 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
-        rcc_set_sysclk_source(RCC_CFGR_SW_HSI16); // Sets sysclk source for RTOS
+        rcc_set_msi_range(RCC_CR_MSIRANGE_1MHZ); // 1 MHz MSI
+        rcc_osc_on(RCC_MSI);                      // 1 MHz MSI
+        rcc_wait_for_osc_ready(RCC_MSI);          // Wait until MSI is ready
+        rcc_set_sysclk_source(RCC_CFGR_SW_MSI);   // Sets sysclk source for RTOS
         rcc_osc_off(RCC_PLL);                      // 80 MHz PLL
-        rcc_wait_for_osc_ready(RCC_PLL);          // Wait until PLL is ready
-        rcc_set_main_pll(                         // Setup 80 MHz clock
-        RCC_PLLCFGR_PLLSRC_HSI16,                // PLL clock source
-        8,                                       // PLL VCO division factor
-        8,                                      // PLL VCO multiplication factor
-        0,                                       // PLL P clk output division factor
-        0,                                       // PLL Q clk output division factor
-        RCC_PLLCFGR_PLLR_DIV8                    // PLL sysclk output division factor
-        ); // 16MHz/8 = 2MHz; 2MHz*8 = 16MHz VCO; 16MHz/8 = 2MHz PLL
-        rcc_osc_on(RCC_PLL);                      // 2 MHz PLL
-        rcc_wait_for_osc_ready(RCC_PLL);          // Wait until PLL is ready
-        rcc_set_sysclk_source(RCC_CFGR_SW_PLL);   // Sets sysclk source for RTOS
-        rcc_wait_for_sysclk_status(RCC_PLL);
+
         power_mode = BOOTLOADER_POWER_LOWPOWERRUN;
         pwr_enable_low_power_run();
+
+        usart_disable(USART1);
+        init_uart();      // reenable uart
         break;
 
 
       case BOOTLOADER_POWER_LOWPOWERSLEEP:
+        for(int i = 0; i < 40000; i++) {
+          __asm__("nop");
+        }
+        rcc_set_msi_range(RCC_CR_MSIRANGE_1MHZ); // 1 MHz MSI
+        rcc_osc_on(RCC_MSI);                      // 1 MHz MSI
+        rcc_wait_for_osc_ready(RCC_MSI);          // Wait until MSI is ready
+        rcc_set_sysclk_source(RCC_CFGR_SW_MSI);   // Sets sysclk source for RTOS
+        rcc_osc_off(RCC_PLL);                      // 80 MHz PLL
+
         power_mode = BOOTLOADER_POWER_LOWPOWERSLEEP;
+        pwr_enable_low_power_run();
+
+        usart_disable(USART1);
+        init_uart();      // reenable uart
+
+        usart_enable_rx_interrupt(USART1);
+        __asm__("wfi");
         break;
 
 
@@ -272,8 +299,8 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         __asm__("wfe");
         __asm__("wfe");
 
-        init_clock();
-        init_uart();
+        init_clock();     // reenable clock
+        init_uart();      // reenable uart
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
@@ -293,8 +320,8 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         __asm__("wfe");
 
 
-        init_clock();
-        init_uart();
+        init_clock();     // reenable clock
+        init_uart();     // reenable uart
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
@@ -313,8 +340,8 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         __asm__("wfe");
         __asm__("wfe");
 
-        init_clock();
-        init_uart();
+        init_clock();     // reenable clock
+        init_uart();     // reenable uart
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
@@ -325,14 +352,19 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
+        // clear wakeup flags
         PWR_SCR |= PWR_SCR_CWUF5;
         PWR_SCR |= PWR_SCR_CWUF4;
         PWR_SCR |= PWR_SCR_CWUF3;
         PWR_SCR |= PWR_SCR_CWUF2;
         PWR_SCR |= PWR_SCR_CWUF1;
 
+        // set wakeup pin 2
         PWR_CR3 |= PWR_CR3_EWUP2;
+        // set wakeup on rising edge
         PWR_CR4 = 0;
+
+        // enable gpio pin for wakeup
         gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
         power_mode = BOOTLOADER_POWER_STANDBY;
 
@@ -341,8 +373,8 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         __asm__("wfe");
         __asm__("wfe");
 
-        init_clock();
-        init_uart();
+        init_clock();     // reenable clock
+        init_uart();     // reenable uart
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
@@ -352,14 +384,19 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         for(int i = 0; i < 40000; i++) {
           __asm__("nop");
         }
+        // clear wakeup flags
         PWR_SCR |= PWR_SCR_CWUF5;
         PWR_SCR |= PWR_SCR_CWUF4;
         PWR_SCR |= PWR_SCR_CWUF3;
         PWR_SCR |= PWR_SCR_CWUF2;
         PWR_SCR |= PWR_SCR_CWUF1;
 
+        // set wakeup pin 2
         PWR_CR3 |= PWR_CR3_EWUP2;
+        // set wakeup on rising edge
         PWR_CR4 = 0;
+
+        // enable gpio pin for wakeup
         gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
         power_mode = BOOTLOADER_POWER_SHUTDOWN;
 
@@ -369,8 +406,8 @@ void move_power_mode(tx_cmd_buff_t* tx_cmd_buff) {
         __asm__("wfe");
 
 
-        init_clock();
-        init_uart();
+        init_clock();     // reenable clock
+        init_uart();     // reenable uart
 
         power_mode = BOOTLOADER_POWER_RUN;
         power_mode_pending = BOOTLOADER_POWER_RUN;
