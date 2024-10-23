@@ -120,16 +120,16 @@ Using these 3 registers we can change the power mode of the MCU
 
 ## Power Modes in TAB
 
-| Mode              |       Entry      | Confirmation     | Wakeup                  | Power Usage |
-|:-----------------:|:----------------:|:----------------:|:-----------------------:|:-----------:|
-| Run               |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 11.35 mA    |
-| Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.37 mA     |
-| Low-power Run     |:heavy_check_mark:|:heavy_check_mark:|         :x:             | 1.196 mA    |
-| Low-power Sleep   |:heavy_check_mark:|:heavy_check_mark:|         :x:             | 1.136 mA    |
-| Stop 0            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.973 mA    |
-| Stop 1            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.864 mA    |
-| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.855 mA    |
-| Standby           |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: WKUP  | 0.365 mA    |
-| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: WKUP  | 0.364 mA    |
+| Mode              |       Entry      | Confirmation     | Wakeup                  | Current Draw | Power Usage |
+|:-----------------:|:----------------:|:----------------:|:-----------------------:|:------------:|:-----------:|
+| Run               |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 11.35 mA     |  37.455 mW  |
+| Sleep             |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: Usart | 5.37 mA      |  17.721 mW  |
+| Low-power Run     |:heavy_check_mark:|:heavy_check_mark:|         :x:             | 1.196 mA     |  3.9468 mW  |
+| Low-power Sleep   |:heavy_check_mark:|:heavy_check_mark:|         :x:             | 1.136 mA     |  3.7488 mW  |
+| Stop 0            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.973 mA     |  3.366 mW   |
+| Stop 1            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.864 mA     |  2.8512 mW  |
+| Stop 2            |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: GPIO  | 0.855 mA     |  2.8215 mW  |
+| Standby           |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: WKUP  | 0.365 mA     |  1.2045 mW  |
+| Shutdown          |:heavy_check_mark:|:heavy_check_mark:|:heavy_check_mark: WKUP  | 0.364 mA     |  1.20285 mW |
 
 ![Power Consmption bar Chart!](./image.png)
