@@ -34,6 +34,8 @@
 // Program Operations
 #define IS25LP128F_CMD_QUAD_PAGE_PROGRAM              0x32
 
+#define IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ          0x6B
+
 
 #endif // IS25LP128F_H
 

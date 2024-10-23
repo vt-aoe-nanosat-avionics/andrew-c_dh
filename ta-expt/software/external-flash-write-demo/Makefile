@@ -3,8 +3,6 @@ BUILD_DIR = build
 
 TA_EXPT_DIR = ./ta-expt
 CFILES = external_flash_write_demo.c
-CFILES += quadspi_common_v1.c
-AFILES += # TA_EXPT_DIR ASM files
 
 # Edit these two lines as needed
 DEVICE=stm32l496rgt3

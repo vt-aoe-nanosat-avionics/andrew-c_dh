@@ -31,6 +31,9 @@
 #define IS25LP128F_CMD_ENTER_QPI_MODE                 0x35
 #define IS25LP128F_CMD_EXIT_QPI_MODE                  0xF5
 
+// Program Operations
+#define IS25LP128F_CMD_QUAD_PAGE_PROGRAM              0x32
+
 
 #endif // IS25LP128F_H
 
