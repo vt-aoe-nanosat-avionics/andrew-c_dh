@@ -102,7 +102,7 @@ int main(void) {
 
 
   struct quadspi_command command;
-  command.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  command.instruction.mode = QUADSPI_CCR_MODE_1LINE;
   command.instruction.instruction = IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ;
   command.address.mode = QUADSPI_CCR_MODE_1LINE;
   command.address.size = QUADSPI_CCR_SIZE_24BIT;
@@ -122,19 +122,21 @@ int main(void) {
 //  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
 //  quadspi_send_instruction(IS25LP128F_CMD_ENTER_QPI_MODE, QUADSPI_CCR_MODE_1LINE);
 
-  quadspi_write(&enableWrite, memoryContent, 0);
-  quadspi_write(&enableQPI, memoryContent, 0);
+  //quadspi_write(&enableWrite, memoryContent, 0);
+  //quadspi_write(&enableQPI, memoryContent, 0);
 
   //quadspi_write(&enableWrite, memoryContent, 0);
   //quadspi_write(&write_readParameters, &readParameters, 4);
 
 
-  quadspi_read(&command, memoryContent, 8U);
+  quadspi_read(&command, memoryContent, 8);
 	//quadspi_read(0x000000, 8U, memoryContent);
 
   usart_send_blocking(USART1,'\r');
   usart_send_blocking(USART1,'\n');
   usart_send_blocking(USART1,'r');
+  usart_send_blocking(USART1,'\r');
+  usart_send_blocking(USART1,'\n');
   usart_send_blocking(USART1,memoryContent[0]);
   usart_send_blocking(USART1,memoryContent[1]);
   usart_send_blocking(USART1,memoryContent[2]);
@@ -160,15 +162,21 @@ int main(void) {
   command.address.mode = QUADSPI_CCR_MODE_1LINE;
   command.address.size = QUADSPI_CCR_SIZE_24BIT;
   command.address.address = 0x000000;
-  quadspi_write(&command, memoryContent, 8U);
+  quadspi_write(&command, memoryContent, 8);
   //quadspi_write(0x000000, 8U, memoryContent);
 
-  quadspi_read(&command, memoryContent, 8U);
+  command.instruction.instruction = IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ;
+  command.address.mode = QUADSPI_CCR_MODE_1LINE;
+  command.address.size = QUADSPI_CCR_SIZE_24BIT;
+  command.address.address = 0x000000;
+  quadspi_read(&command, memoryContent, 8);
   //quadspi_read(0x000000, 8U, memoryContent);
 
   usart_send_blocking(USART1,'\r');
   usart_send_blocking(USART1,'\n');
   usart_send_blocking(USART1,'w');
+  usart_send_blocking(USART1,'\r');
+  usart_send_blocking(USART1,'\n');
   usart_send_blocking(USART1,memoryContent[0]);
   usart_send_blocking(USART1,memoryContent[1]);
   usart_send_blocking(USART1,memoryContent[2]);
