@@ -36,8 +36,7 @@ int main(void) {
   rcc_osc_on(RCC_PLL);     // internal phase-locked loop
     //// At this point, either rcc_wait_for_osc_ready() or do other things
 	rcc_periph_clock_enable(RCC_GPIOA);  // enable clock for port with USART pins
-  rcc_periph_clock_enable(RCC_GPIOB);  // enable clock for port with QUADSPI pins
-	rcc_periph_clock_enable(RCC_GPIOC);  // enable clock for port with LED pins
+	rcc_periph_clock_enable(RCC_GPIOC);  // enable clock for port with QUADSPI pins
   rcc_periph_clock_enable(RCC_USART1); // enable clock for USART1 peripheral
   rcc_periph_clock_enable(RCC_QSPI);   // enable clock for QUADSPI peripheral
   // USART setup
@@ -69,28 +68,46 @@ int main(void) {
   rcc_periph_clock_enable(RCC_QSPI);
 
   gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO1 | GPIO2 | GPIO3 | GPIO4);
-  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO2 | GPIO3);
-  gpio_set_af(GPIOA, GPIO_AF10, GPIO2 | GPIO3);
+  gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11);
+  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO3);
+  gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO1 | GPIO2 | GPIO3 | GPIO4);
+  gpio_set_output_options(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO3);
+  gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO11);
+  gpio_set_af(GPIOA, GPIO_AF10, GPIO3);
   gpio_set_af(GPIOC, GPIO_AF10, GPIO1 | GPIO2 | GPIO3 | GPIO4);
+  gpio_set_af(GPIOC, GPIO_AF5, GPIO11);
 
   quadspi_disable();
   quadspi_set_flash_size(23); // 128 Mbit = 16 Mbyte = 2^(n+1) // n = 23
   quadspi_set_cs_high_time(6);   // 1/2 clock cycle
-  quadspi_set_prescaler(0);   // 1:1 prescaler
+  quadspi_set_prescaler(0);   // 1:2 prescaler
 	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
+  quadspi_select_flash(QUADSPI_FLASH_SEL_2);
   quadspi_enable();
 
   uint8_t memoryContent[8];
+  struct quadspi_command enableWrite;
+  enableWrite.instruction.mode = QUADSPI_CCR_MODE_1LINE;
+  enableWrite.instruction.instruction = IS25LP128F_CMD_WRITE_ENABLE;
+
+  struct quadspi_command enableQPI;
+  enableQPI.instruction.mode = QUADSPI_CCR_MODE_1LINE;  
+  enableQPI.instruction.instruction = IS25LP128F_CMD_ENTER_QPI_MODE;
+
+  struct quadspi_command write_readParameters;
+  write_readParameters.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  write_readParameters.instruction.instruction = IS25LP128F_CMD_WRITE_READ_PARAMETERS;
+
+  uint32_t readParameters = 0x09 << 4;
+
+
   struct quadspi_command command;
   command.instruction.mode = QUADSPI_CCR_MODE_4LINE;
   command.instruction.instruction = IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ;
-  command.address.mode = QUADSPI_CCR_MODE_4LINE;
+  command.address.mode = QUADSPI_CCR_MODE_1LINE;
   command.address.size = QUADSPI_CCR_SIZE_24BIT;
   command.address.address = 0x000000;
-  command.alternative_bytes.mode = QUADSPI_CCR_MODE_4LINE;
-  command.alternative_bytes.size = QUADSPI_CCR_SIZE_8BIT;
-  command.alternative_bytes.value = 0x00;
-  command.dummy_cycles = 0;
+  command.dummy_cycles = 6;
   command.data_mode = QUADSPI_CCR_MODE_4LINE;
 
 //  quadspi_send_instruction(IS25LP128F_CMD_RESET_ENABLE, QUADSPI_CCR_MODE_1LINE);
@@ -104,6 +121,12 @@ int main(void) {
 //
 //  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
 //  quadspi_send_instruction(IS25LP128F_CMD_ENTER_QPI_MODE, QUADSPI_CCR_MODE_1LINE);
+
+  quadspi_write(&enableWrite, memoryContent, 0);
+  quadspi_write(&enableQPI, memoryContent, 0);
+
+  //quadspi_write(&enableWrite, memoryContent, 0);
+  //quadspi_write(&write_readParameters, &readParameters, 4);
 
 
   quadspi_read(&command, memoryContent, 8U);
@@ -130,8 +153,11 @@ int main(void) {
   memoryContent[6] = 0x77;
   memoryContent[7] = 0x6f;
 
+
+  quadspi_write(&enableWrite, memoryContent, 0);
+
   command.instruction.instruction = IS25LP128F_CMD_QUAD_PAGE_PROGRAM;
-  command.address.mode = QUADSPI_CCR_MODE_4LINE;
+  command.address.mode = QUADSPI_CCR_MODE_1LINE;
   command.address.size = QUADSPI_CCR_SIZE_24BIT;
   command.address.address = 0x000000;
   quadspi_write(&command, memoryContent, 8U);
@@ -151,6 +177,17 @@ int main(void) {
   usart_send_blocking(USART1,memoryContent[5]);
   usart_send_blocking(USART1,memoryContent[6]);
   usart_send_blocking(USART1,memoryContent[7]);
+
+  //usart_send_blocking(USART1,'\r');
+  //usart_send_blocking(USART1,'\n');
+  //usart_send_blocking(USART1,'f');
+  //usart_send_blocking(USART1,'i');
+  //usart_send_blocking(USART1,'n');
+  //usart_send_blocking(USART1,'i');
+  //usart_send_blocking(USART1,'s');
+  //usart_send_blocking(USART1,'h');
+  //usart_send_blocking(USART1,'\r');
+  //usart_send_blocking(USART1,'\n');
   
 
   return 0;
