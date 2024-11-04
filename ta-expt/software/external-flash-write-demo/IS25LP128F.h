@@ -10,8 +10,13 @@
 #define IS25LP128F_CMD_RESET                          0x99
 
 // Read ID
+#define IS25LP128F_CMD_FAST_READ                      0x0C
 #define IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ          0x6B
 #define IS25LP128F_CMD_QUAD_IO_FAST_READ              0xEB
+
+// Erase Operations
+#define IS25LP128F_CMD_ERASE_SECTOR                   0x21
+#define IS25LP128F_CMD_ERASE_BLOCK                    0x5C
 
 // Write Operations
 #define IS25LP128F_CMD_WRITE_ENABLE                   0x06
@@ -32,9 +37,8 @@
 #define IS25LP128F_CMD_EXIT_QPI_MODE                  0xF5
 
 // Program Operations
+#define IS25LP128F_CMD_PAGE_PROGRAM                   0x12
 #define IS25LP128F_CMD_QUAD_PAGE_PROGRAM              0x32
-
-#define IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ          0x6B
 
 
 #endif // IS25LP128F_H

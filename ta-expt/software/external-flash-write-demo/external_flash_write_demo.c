@@ -18,6 +18,8 @@
 
 #include <IS25LP128F.h>              // IS25LP128F flash memory macros
 
+#define ADDRESS 0x003FA5A5
+
 
 //void quadspi_write(uint32_t address, uint32_t length, uint8_t data[]);
 //void quadspi_read(uint32_t address, uint32_t length, uint8_t* data);
@@ -25,16 +27,6 @@
 
 // Main
 int main(void) {
-  // clock setup
-  rcc_osc_on(RCC_HSI16);   // high-speed (16 MHz) internal RC oscillator
-  //flash_prefetch_enable(); // buffer used for instruction fetches
-  //flash_set_ws(4);         // number of wait states should be matched to clock
-  //flash_dcache_enable();   // enable data cache
-  //flash_icache_enable();   // enable instruction cache
-    //// 16MHz/4 = 4MHz; 4*40=160MHz VCO; 80MHz main PLL
-  rcc_set_main_pll(RCC_PLLCFGR_PLLSRC_HSI16,4,40,0,0,RCC_PLLCFGR_PLLR_DIV2);
-  rcc_osc_on(RCC_PLL);     // internal phase-locked loop
-    //// At this point, either rcc_wait_for_osc_ready() or do other things
 	rcc_periph_clock_enable(RCC_GPIOA);  // enable clock for port with USART pins
 	rcc_periph_clock_enable(RCC_GPIOC);  // enable clock for port with QUADSPI pins
   rcc_periph_clock_enable(RCC_USART1); // enable clock for USART1 peripheral
@@ -65,7 +57,6 @@ int main(void) {
 
 
   // QUADSPI setup
-  rcc_periph_clock_enable(RCC_QSPI);
 
   gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO1 | GPIO2 | GPIO3 | GPIO4);
   gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11);
@@ -80,57 +71,76 @@ int main(void) {
   quadspi_disable();
   quadspi_set_flash_size(23); // 128 Mbit = 16 Mbyte = 2^(n+1) // n = 23
   quadspi_set_cs_high_time(6);   // 1/2 clock cycle
-  quadspi_set_prescaler(0);   // 1:2 prescaler
+  quadspi_set_prescaler(0);   // 1:1 prescaler
 	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
   quadspi_select_flash(QUADSPI_FLASH_SEL_2);
+  quadspi_set_threshold_level(7);
   quadspi_enable();
 
-  uint8_t memoryContent[8];
+
+  rcc_periph_clock_enable(RCC_QSPI);
+
+  uint8_t memoryContent[256];
+
   struct quadspi_command enableWrite;
   enableWrite.instruction.mode = QUADSPI_CCR_MODE_1LINE;
   enableWrite.instruction.instruction = IS25LP128F_CMD_WRITE_ENABLE;
+  enableWrite.alternative_bytes.mode = QUADSPI_CCR_MODE_NONE;
+  enableWrite.address.mode = QUADSPI_CCR_MODE_NONE;
+  enableWrite.dummy_cycles = 0;
+  enableWrite.data_mode = QUADSPI_CCR_MODE_NONE;
 
   struct quadspi_command enableQPI;
   enableQPI.instruction.mode = QUADSPI_CCR_MODE_1LINE;  
   enableQPI.instruction.instruction = IS25LP128F_CMD_ENTER_QPI_MODE;
+  enableQPI.alternative_bytes.mode = QUADSPI_CCR_MODE_NONE;
+  enableQPI.address.mode = QUADSPI_CCR_MODE_NONE;
+  enableQPI.dummy_cycles = 0;
+  enableQPI.data_mode = QUADSPI_CCR_MODE_NONE;
 
-  struct quadspi_command write_readParameters;
-  write_readParameters.instruction.mode = QUADSPI_CCR_MODE_4LINE;
-  write_readParameters.instruction.instruction = IS25LP128F_CMD_WRITE_READ_PARAMETERS;
+  // Read data from the flash
+  struct quadspi_command read;
+  read.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  read.instruction.instruction = IS25LP128F_CMD_FAST_READ;
+  read.address.mode = QUADSPI_CCR_MODE_4LINE;
+  read.address.address = ADDRESS;
+  read.address.size = QUADSPI_CCR_SIZE_32BIT;
+  read.alternative_bytes.mode = QUADSPI_CCR_MODE_NONE;
+  read.dummy_cycles = 6;
+  read.data_mode = QUADSPI_CCR_MODE_4LINE;
 
-  uint32_t readParameters = 0x09 << 4;
-
-
-  struct quadspi_command command;
-  command.instruction.mode = QUADSPI_CCR_MODE_1LINE;
-  command.instruction.instruction = IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ;
-  command.address.mode = QUADSPI_CCR_MODE_1LINE;
-  command.address.size = QUADSPI_CCR_SIZE_24BIT;
-  command.address.address = 0x000000;
-  command.dummy_cycles = 6;
-  command.data_mode = QUADSPI_CCR_MODE_4LINE;
-
-//  quadspi_send_instruction(IS25LP128F_CMD_RESET_ENABLE, QUADSPI_CCR_MODE_1LINE);
-//  usart_send_blocking(USART1,'\r');
-//  usart_send_blocking(USART1,'\n');
-//  usart_send_blocking(USART1,'s');
-//  quadspi_send_instruction(IS25LP128F_CMD_RESET, QUADSPI_CCR_MODE_1LINE);
-//
-//  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
-//  quadspi_write_register(IS25LP128F_CMD_WRITE_READ_PARAMETERS, QUADSPI_CCR_MODE_1LINE, 0x09 << 4);
-//
-//  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
-//  quadspi_send_instruction(IS25LP128F_CMD_ENTER_QPI_MODE, QUADSPI_CCR_MODE_1LINE);
-
-  //quadspi_write(&enableWrite, memoryContent, 0);
-  //quadspi_write(&enableQPI, memoryContent, 0);
-
-  //quadspi_write(&enableWrite, memoryContent, 0);
-  //quadspi_write(&write_readParameters, &readParameters, 4);
+  // Set sector of the flash to 1s
+  struct quadspi_command erase;
+  erase.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  erase.instruction.instruction = IS25LP128F_CMD_ERASE_SECTOR;
+  erase.address.mode = QUADSPI_CCR_MODE_4LINE;
+  erase.address.address = ADDRESS;
+  erase.address.size = QUADSPI_CCR_SIZE_32BIT;
+  erase.alternative_bytes.mode = QUADSPI_CCR_MODE_NONE;
+  erase.dummy_cycles = 0;
+  erase.data_mode = QUADSPI_CCR_MODE_NONE;
 
 
-  quadspi_read(&command, memoryContent, 8);
-	//quadspi_read(0x000000, 8U, memoryContent);
+  // Program data to the flash
+  struct quadspi_command write;
+  write.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  write.instruction.instruction = IS25LP128F_CMD_PAGE_PROGRAM;
+  write.address.mode = QUADSPI_CCR_MODE_4LINE;
+  write.address.address = ADDRESS;
+  write.address.size = QUADSPI_CCR_SIZE_32BIT;
+  write.alternative_bytes.mode = QUADSPI_CCR_MODE_NONE;
+  write.dummy_cycles = 0;
+  write.data_mode = QUADSPI_CCR_MODE_4LINE;
+
+
+
+  quadspi_wait_while_busy();
+  quadspi_write(&enableWrite, memoryContent, 0);
+  quadspi_wait_while_busy();
+  quadspi_write(&enableQPI, memoryContent, 0);
+
+  quadspi_wait_while_busy();
+  quadspi_read(&read, memoryContent, 8);
 
   usart_send_blocking(USART1,'\r');
   usart_send_blocking(USART1,'\n');
@@ -146,6 +156,23 @@ int main(void) {
   usart_send_blocking(USART1,memoryContent[6]);
   usart_send_blocking(USART1,memoryContent[7]);
 
+
+  //while(1);
+
+  enableWrite.instruction.mode = QUADSPI_CCR_MODE_4LINE;
+  quadspi_wait_while_busy();
+  quadspi_write(&enableWrite, memoryContent, 0);
+
+  quadspi_wait_while_busy();
+  quadspi_write(&erase, memoryContent, 0);
+  for(int i = 0; i < 400000; i++) {__asm__("nop");}
+
+  quadspi_wait_while_busy();
+  quadspi_read(&read, memoryContent, 8);
+  for(int i = 0; i < 400000; i++) {__asm__("nop");}
+
+
+  uint32_t test = 0x0000000000000012;
   memoryContent[0] = 0x68;
   memoryContent[1] = 0x65;
   memoryContent[2] = 0x6c;
@@ -155,106 +182,33 @@ int main(void) {
   memoryContent[6] = 0x77;
   memoryContent[7] = 0x6f;
 
-
+  quadspi_wait_while_busy();
   quadspi_write(&enableWrite, memoryContent, 0);
 
-  command.instruction.instruction = IS25LP128F_CMD_QUAD_PAGE_PROGRAM;
-  command.address.mode = QUADSPI_CCR_MODE_1LINE;
-  command.address.size = QUADSPI_CCR_SIZE_24BIT;
-  command.address.address = 0x000000;
-  quadspi_write(&command, memoryContent, 8);
-  //quadspi_write(0x000000, 8U, memoryContent);
+  quadspi_wait_while_busy();
+  quadspi_write(&write, memoryContent, 8);
+  //for(int i = 0; i < 40000; i++) {__asm__("nop");}
 
-  command.instruction.instruction = IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ;
-  command.address.mode = QUADSPI_CCR_MODE_1LINE;
-  command.address.size = QUADSPI_CCR_SIZE_24BIT;
-  command.address.address = 0x000000;
-  quadspi_read(&command, memoryContent, 8);
-  //quadspi_read(0x000000, 8U, memoryContent);
+  uint8_t flashContent[8];
+
+  quadspi_wait_while_busy();
+  quadspi_read(&read, flashContent, 8);
+
 
   usart_send_blocking(USART1,'\r');
   usart_send_blocking(USART1,'\n');
   usart_send_blocking(USART1,'w');
   usart_send_blocking(USART1,'\r');
   usart_send_blocking(USART1,'\n');
-  usart_send_blocking(USART1,memoryContent[0]);
-  usart_send_blocking(USART1,memoryContent[1]);
-  usart_send_blocking(USART1,memoryContent[2]);
-  usart_send_blocking(USART1,memoryContent[3]);
-  usart_send_blocking(USART1,memoryContent[4]);
-  usart_send_blocking(USART1,memoryContent[5]);
-  usart_send_blocking(USART1,memoryContent[6]);
-  usart_send_blocking(USART1,memoryContent[7]);
-
-  //usart_send_blocking(USART1,'\r');
-  //usart_send_blocking(USART1,'\n');
-  //usart_send_blocking(USART1,'f');
-  //usart_send_blocking(USART1,'i');
-  //usart_send_blocking(USART1,'n');
-  //usart_send_blocking(USART1,'i');
-  //usart_send_blocking(USART1,'s');
-  //usart_send_blocking(USART1,'h');
-  //usart_send_blocking(USART1,'\r');
-  //usart_send_blocking(USART1,'\n');
+  usart_send_blocking(USART1,flashContent[0]);
+  usart_send_blocking(USART1,flashContent[1]);
+  usart_send_blocking(USART1,flashContent[2]);
+  usart_send_blocking(USART1,flashContent[3]);
+  usart_send_blocking(USART1,flashContent[4]);
+  usart_send_blocking(USART1,flashContent[5]);
+  usart_send_blocking(USART1,flashContent[6]);
+  usart_send_blocking(USART1,flashContent[7]);
   
 
   return 0;
 }
-
-
-//void quadspi_write(uint32_t address, uint32_t length, uint8_t data[])
-//{
-//	quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_4LINE);
-//	while(quadspi_get_busy()) {
-//		;
-//	}
-//	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
-//	quadspi_set_data_length(length-1);
-//	quadspi_set_fifo_threshold(1);
-//
-//	quadspi_set_fmode(QUADSPI_CCR_FMODE_IWRITE);
-//	quadspi_set_data_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_instruction_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_address_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_address_size(QUADSPI_CCR_ADSIZE_24BIT);
-//	quadspi_set_instruction(IS25LP128F_CMD_QUAD_PAGE_PROGRAM);
-//	quadspi_set_address(address);
-//
-//	uint32_t data_index = 0;
-//	do {
-//		quadspi_set_data(*(uint32_t*)data);
-//		data_index++;
-//		while ((QUADSPI_SR & (QUADSPI_SR_FLEVEL_MASK << QUADSPI_SR_FLEVEL_SHIFT)) != 0x00); //wait for the data to be shifted out
-//	} while (quadspi_get_busy());
-//
-//
-//	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
-//}
-//
-//void quadspi_read(uint32_t address, uint32_t length, uint8_t* data)
-//{
-//	while(quadspi_get_busy()) {
-//		;
-//	}
-//	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
-//	quadspi_set_data_length(length-1);
-//	quadspi_set_fifo_threshold(1);
-//
-//	quadspi_set_fmode(QUADSPI_CCR_FMODE_IREAD);
-//	quadspi_set_data_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_instruction_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_address_mode(QUADSPI_CCR_MODE_4LINE);
-//	quadspi_set_address_size(QUADSPI_CCR_ADSIZE_24BIT);
-//	quadspi_set_instruction(IS25LP128F_CMD_QUAD_OUTPUT_FAST_READ);
-//	quadspi_set_address(address);
-//
-//	int index = 0;
-//
-//	while(quadspi_get_busy()) {
-//		if(quadspi_get_flag(QUADSPI_SR_FTF) > 0) {
-//			data[index++] = quadspi_get_data();
-//		}
-//	}
-//
-//	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
-//}
