@@ -171,7 +171,7 @@ This command supports a variable-length byte payload useful for data transfer.
 * Required parameters: Flash HWID, Start Address, Length of Read
 * Optional parameters: None
 * Reply:
-  * If the byte write is successful: `common_data`
+  * If the byte write is successful: `common_data` containing read bytes
   * Otherwise: `common_nack`
 
 **Header**
@@ -184,9 +184,9 @@ This command supports a variable-length byte payload useful for data transfer.
 
 **Payload**
 
-| Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) | Read Length | Data                     |
-| -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ----------- | ------------------------ |
-| 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH        | 0xHH x244                |
+| Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) | Read Length |
+| -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ----------- |
+| 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH        |
 
 * Up to 244 byte reads
 
