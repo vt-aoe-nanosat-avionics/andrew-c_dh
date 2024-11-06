@@ -421,12 +421,13 @@ while(1):
     filename = opts[0]
     address = int(opts[1],16)
     file = open(filename, 'r')
+    filesize = os.path.getsize(filename)
 
-    for i in range(0, os.path.getsize(filename), 128):
-      file_data = file.read(128)
+    for i in range(0, filesize, 128):
+      file_data = bytearray(file.read(128))
 
       cmd = TxCmd(COMMON_WRITE_EXT_OPCODE, HWID, msgid, GND, CDH)
-      cmd.common_write_ext(address, list(int(z,16) for z in list(hex(ord(x))[2:] for x in file_data)))
+      cmd.common_write_ext(address, list(filesize.to_bytes(4,byteorder='big'), file_data))
       address = address + 128
       byte_i = 0
       while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
