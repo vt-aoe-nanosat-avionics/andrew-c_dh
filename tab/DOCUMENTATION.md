@@ -180,8 +180,6 @@ This command supports a variable-length byte payload useful for data transfer.
 | ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
 | 0x22         | 0x69         | 0x0c            | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x1c   |
 
-* Remaining Bytes must be greater than or equal to 0x07
-
 **Payload**
 
 | Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) | Read Length |
