@@ -186,7 +186,7 @@ This command supports a variable-length byte payload useful for data transfer.
 | -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ----------- |
 | 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH        |
 
-* Up to 244 byte reads
+* Up to 245 byte reads
 
 ### <a name="bootloader-ack"></a> Bootloader Ack
 
