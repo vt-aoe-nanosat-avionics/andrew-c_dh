@@ -32,6 +32,7 @@ int main(void) {
   init_clock();
   init_uart();
   init_rtc();
+  init_flash_ext();
 
   rx_cmd_buff_t rx_cmd_buff = {.size=CMD_MAX_LEN};
   clear_rx_cmd_buff(&rx_cmd_buff);

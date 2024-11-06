@@ -57,7 +57,7 @@ msgid = 0x0000
 rx_cmd_buff = RxCmdBuff()
 
 while(1):
-  command = input(">")
+  command = input("> ")
   code = command.split(' ')[0]
   opts = command.split(' ')[1:]
   if code == "common_ack":
@@ -76,7 +76,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
   
   elif code == "common_nack":
     cmd = TxCmd(COMMON_NACK_OPCODE, HWID, msgid, GND, CDH)
@@ -94,7 +94,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "common_debug":
     cmd = TxCmd(COMMON_DEBUG_OPCODE, HWID, msgid, GND, CDH)
@@ -113,7 +113,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "common_data":
     cmd = TxCmd(COMMON_DATA_OPCODE, HWID, msgid, GND, CDH)
@@ -132,11 +132,11 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
-  elif code == "common_write_ext_opcde":
-    cmd = TxCmd(COMMON_WRITE_EXT_OPCODE_OPCODE, HWID, msgid, GND, CDH)
-    cmd.common_write_ext_opcode(0x01010101, [0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b])
+  elif code == "common_write_ext":
+    cmd = TxCmd(COMMON_WRITE_EXT_OPCODE, HWID, msgid, GND, CDH)
+    cmd.common_write_ext(int(opts[0],16), list(int(z,16) for z in list(hex(ord(y))[2:] for x in opts[1:] for y in x)))
     byte_i = 0
     while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
       if byte_i < cmd.get_byte_count():
@@ -151,7 +151,45 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+
+
+  elif code == "common_erase_sector_ext":
+    cmd = TxCmd(COMMON_ERASE_SECTOR_EXT_OPCODE, HWID, msgid, GND, CDH)
+    cmd.common_erase_sector_ext(int(opts[0],16))
+    byte_i = 0
+    while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+      if byte_i < cmd.get_byte_count():
+        serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+        byte_i += 1
+      if serial_port.in_waiting>0:
+        bytes = serial_port.read(1)
+        for b in bytes:
+          rx_cmd_buff.append_byte(b)
+    print('txcmd: '+str(cmd))
+    print('reply: '+str(rx_cmd_buff)+'\n')
+    cmd.clear()
+    rx_cmd_buff.clear()
+    msgid += 1
+
+
+  elif code == "common_read_ext":
+    cmd = TxCmd(COMMON_READ_EXT_OPCODE, HWID, msgid, GND, CDH)
+    cmd.common_read_ext(int(opts[0],16), int(opts[1]))
+    byte_i = 0
+    while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+      if byte_i < cmd.get_byte_count():
+        serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+        byte_i += 1
+      if serial_port.in_waiting>0:
+        bytes = serial_port.read(1)
+        for b in bytes:
+          rx_cmd_buff.append_byte(b)
+    print('txcmd: '+str(cmd))
+    print('reply: '+str(rx_cmd_buff)+'\n')
+    cmd.clear()
+    rx_cmd_buff.clear()
+    msgid += 1
+
 
   elif code == "bootloader_ack":
     cmd = TxCmd(BOOTLOADER_ACK_OPCODE, HWID, msgid, GND, CDH)
@@ -169,7 +207,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
 
   elif code == "bootloader_nack":
@@ -188,7 +226,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_ping":
     cmd = TxCmd(BOOTLOADER_PING_OPCODE, HWID, msgid, GND, CDH)
@@ -206,7 +244,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_erase":
     cmd = TxCmd(BOOTLOADER_ERASE_OPCODE, HWID, msgid, GND, CDH)
@@ -224,7 +262,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_write_page":
     cmd = TxCmd(BOOTLOADER_WRITE_PAGE_OPCODE, HWID, msgid, GND, CDH)
@@ -243,7 +281,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_write_page_addr32":
     cmd = TxCmd(BOOTLOADER_WRITE_PAGE_ADDR32_OPCODE, HWID, msgid, GND, CDH)
@@ -262,7 +300,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_jump":
     cmd = TxCmd(BOOTLOADER_JUMP_OPCODE, HWID, msgid, GND, CDH)
@@ -280,7 +318,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "bootloader_power":
     cmd = TxCmd(BOOTLOADER_POWER_OPCODE, HWID, msgid, GND, CDH)
@@ -299,7 +337,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "app_get_telem":
     cmd = TxCmd(COMMON_ASCII_OPCODE, HWID, msgid, GND, CDH)
@@ -322,7 +360,7 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "app_get_time":
     cmd = TxCmd(APP_GET_TIME_OPCODE, HWID, msgid, GND, CDH)
@@ -340,10 +378,11 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
 
   elif code == "app_reboot":
     continue
+
 
   elif code == "app_set_time":
     cmd = TxCmd(APP_SET_TIME_OPCODE, HWID, msgid, GND, CDH)
@@ -363,7 +402,37 @@ while(1):
     cmd.clear()
     rx_cmd_buff.clear()
     msgid += 1
-    time.sleep(1.0)
+    
+
+  elif code == "write_file":
+    filename = opts[0]
+    address = int(opts[1],16)
+    file = open(filename, 'r')
+
+    for i in range(0, os.path.getsize(filename), 128):
+      file_data = file.read(128)
+
+      cmd = TxCmd(COMMON_WRITE_EXT_OPCODE, HWID, msgid, GND, CDH)
+      cmd.common_write_ext(address, list(int(z,16) for z in list(hex(ord(x))[2:] for x in file_data)))
+      address = address + 128
+      byte_i = 0
+      while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+        if byte_i < cmd.get_byte_count():
+          serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+          byte_i += 1
+        if serial_port.in_waiting>0:
+          bytes = serial_port.read(1)
+          for b in bytes:
+            rx_cmd_buff.append_byte(b)
+      print('txcmd: '+str(cmd))
+      print('reply: '+str(rx_cmd_buff)+'\n')
+      cmd.clear()
+      rx_cmd_buff.clear()
+      msgid += 1
+    break
+
+  elif code == "read_file":
+    break
 
   elif code == "exit":
     break

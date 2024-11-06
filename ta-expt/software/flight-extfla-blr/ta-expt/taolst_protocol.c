@@ -514,10 +514,11 @@ int common_write_ext(rx_cmd_buff_t* rx_cmd_buff) {
     uint8_t ready;
     uint16_t i = 0;
     do{
-      ready = ext_flash_check_write_in_progess();
+      quadspi_wait_while_busy();
+      ready = 0;//ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
-    if(flash_id_nibble == 0 && addr < 0x01000000 && i < 10000)
+    if(flash_id_nibble == 0x00 && addr < 0x01000000 && i < 10000)
     {
       quadspi_wait_while_busy();
       quadspi_write(&enableWrite_quad, NULL, 0);
@@ -539,14 +540,14 @@ int common_erase_sector_ext(rx_cmd_buff_t* rx_cmd_buff) {
    rx_cmd_buff->state==RX_CMD_BUFF_STATE_COMPLETE &&
    rx_cmd_buff->data[OPCODE_INDEX]==COMMON_ERASE_SECTOR_EXT_OPCODE
   ) {
-    uint8_t data_length = (uint8_t)(rx_cmd_buff->data[MSG_LEN_INDEX]) - 0x0b;
     uint8_t flash_id_nibble = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX]);
     uint32_t addr = (uint32_t)(rx_cmd_buff->data[DATA_START_INDEX+1]);
 
     uint8_t ready;
     uint16_t i = 0;
     do{
-      ready = ext_flash_check_write_in_progess();
+      quadspi_wait_while_busy();
+      ready = 0;//ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
     if(flash_id_nibble == 0 && addr < 0x01000000 && !(addr % 0x00001000) && i < 10000)
@@ -571,22 +572,21 @@ int common_read_ext(rx_cmd_buff_t* rx_cmd_buff) {
    rx_cmd_buff->state==RX_CMD_BUFF_STATE_COMPLETE &&
    rx_cmd_buff->data[OPCODE_INDEX]==COMMON_READ_EXT_OPCODE
   ) {
-    uint8_t data_length = (uint8_t)(rx_cmd_buff->data[MSG_LEN_INDEX]) - 0x0b;
     uint8_t flash_id_nibble = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX]);
     uint32_t addr = (uint32_t)(rx_cmd_buff->data[DATA_START_INDEX+1]);
+    uint8_t data_length = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX+5]);
     uint8_t* data = &(rx_cmd_buff->data[DATA_START_INDEX+5]);
 
     uint8_t ready;
     uint16_t i = 0;
+    return data_length;
     do{
-      ready = ext_flash_check_write_in_progess();
+      quadspi_wait_while_busy();
+      ready = 0;//ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
     if(flash_id_nibble == 0 && addr < 0x01000000 && i < 10000)
     {
-      quadspi_wait_while_busy();
-      quadspi_write(&enableWrite_quad, NULL, 0);
-
       read.address.address = addr;
       quadspi_wait_while_busy();
       quadspi_write(&read, data, data_length);

@@ -109,6 +109,7 @@ void init_rtc(void) {
   rtc_set = 0;                       // RTC date and time has not yet been set
 }
 
+// must be called after init_uart
 void init_flash_ext(void) {
 
   struct quadspi_command enableQPI = {
@@ -128,7 +129,8 @@ void init_flash_ext(void) {
     .dummy_cycles = 0,
     .data_mode = QUADSPI_CCR_MODE_NONE
   };
-
+  rcc_periph_clock_enable(RCC_GPIOC);
+  rcc_periph_clock_enable(RCC_QSPI);
   gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO1 | GPIO2 | GPIO3 | GPIO4);
   gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11);
   gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO3);
@@ -147,8 +149,6 @@ void init_flash_ext(void) {
   quadspi_select_flash(QUADSPI_FLASH_SEL_2);
   quadspi_set_threshold_level(7); // Set FIFO threshold level to 8 bytes
   quadspi_enable();
-
-  rcc_periph_clock_enable(RCC_QSPI);
 
   quadspi_wait_while_busy();
   quadspi_write(&enableWrite_single, NULL, 0);
