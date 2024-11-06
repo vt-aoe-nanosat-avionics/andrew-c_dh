@@ -115,6 +115,81 @@ This command supports a variable-length byte payload useful for data transfer.
 
 * Up to 249 bytes
 
+### <a name="common-write-ext"></a> Common Write External
+
+This command supports a variable-length byte payload useful for data transfer.
+* Name: `common_write_ext`
+* Required parameters: Flash HWID, Start Address, One or more bytes
+* Optional parameters: None
+* Reply:
+  * If the byte write is successful: `common_ack`
+  * Otherwise: `common_nack`
+
+**Header**
+
+| Start Byte 0 | Start Byte 1 | Remaining Bytes | HW ID LSByte | HW ID MSByte | MSG ID LSByte | MSG ID MSByte | Route Nibbles | Opcode |
+| ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
+| 0x22         | 0x69         | 0xHH            | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x1a   |
+
+* Remaining Bytes must be greater than or equal to 0x07
+
+**Payload**
+
+| Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) | Data                     |
+| -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------ |
+| 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH x245                |
+
+* Up to 245 bytes
+
+### <a name="common-erase-sector-ext"></a> Common Erase Sector External
+
+This command supports a variable-length byte payload useful for data transfer.
+* Name: `common_erase_sector_ext`
+* Required parameters: Flash HWID, Sector Start Address
+* Optional parameters: None
+* Reply:
+  * If the byte write is successful: `common_ack`
+  * Otherwise: `common_nack`
+
+**Header**
+
+| Start Byte 0 | Start Byte 1 | Remaining Bytes | HW ID LSByte | HW ID MSByte | MSG ID LSByte | MSG ID MSByte | Route Nibbles | Opcode |
+| ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
+| 0x22         | 0x69         | 0x1b            | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x1b   |
+
+**Payload**
+
+| Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) |
+| -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
+| 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            |
+
+
+### <a name="common-read-ext"></a> Common Read External
+
+This command supports a variable-length byte payload useful for data transfer.
+* Name: `common_read_ext`
+* Required parameters: Flash HWID, Start Address, Length of Read
+* Optional parameters: None
+* Reply:
+  * If the byte write is successful: `common_data`
+  * Otherwise: `common_nack`
+
+**Header**
+
+| Start Byte 0 | Start Byte 1 | Remaining Bytes | HW ID LSByte | HW ID MSByte | MSG ID LSByte | MSG ID MSByte | Route Nibbles | Opcode |
+| ------------ | ------------ | --------------- | ------------ | ------------ | ------------- | ------------- | ------------- | ------ |
+| 0x22         | 0x69         | 0xHH            | 0xHH         | 0xHH         | 0xHH          | 0xHH          | 0xSD          | 0x1c   |
+
+* Remaining Bytes must be greater than or equal to 0x07
+
+**Payload**
+
+| Flash ID | Start Address MSByte (Required) | Start Address Byte 2 (Required) | Start Address Byte 3 (Required) | Start Address LSByte (Required) | Read Length | Data                     |
+| -------- | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- | ----------- | ------------------------ |
+| 0x00     | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH                            | 0xHH        | 0xHH x244                |
+
+* Up to 244 byte reads
+
 ### <a name="bootloader-ack"></a> Bootloader Ack
 
 The bootloader acknowledgement command is exclusively used as a bootloader reply
@@ -338,6 +413,8 @@ Power bytes:
 | Stop 2          | 0x06 |
 | Standy          | 0x07 |
 | Shutdown        | 0x08 |
+
+
 
 ## <a name="protocol"></a> Protocol
 
