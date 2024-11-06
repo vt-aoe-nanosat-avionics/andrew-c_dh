@@ -516,7 +516,7 @@ int common_write_ext(rx_cmd_buff_t* rx_cmd_buff) {
     uint16_t i = 0;
     do{
       quadspi_wait_while_busy();
-      ready = 0;//ext_flash_check_write_in_progess();
+      ready = ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
     if(flash_id_nibble == 0x00 && addr < 0x01000000 && i < 10000)
@@ -549,7 +549,7 @@ int common_erase_sector_ext(rx_cmd_buff_t* rx_cmd_buff) {
     uint16_t i = 0;
     do{
       quadspi_wait_while_busy();
-      ready = 0;//ext_flash_check_write_in_progess();
+      ready = ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
     if(flash_id_nibble == 0 && addr < 0x01000000 && !(addr % 0x00001000) && i < 10000)
@@ -582,10 +582,9 @@ int common_read_ext(rx_cmd_buff_t* rx_cmd_buff) {
 
     uint8_t ready;
     uint16_t i = 0;
-    return data_length;
     do{
       quadspi_wait_while_busy();
-      ready = 0;//ext_flash_check_write_in_progess();
+      ready = ext_flash_check_write_in_progess();
     } while(ready && ++i < 10000);
 
     if(flash_id_nibble == 0 && addr < 0x01000000 && i < 10000)
@@ -870,7 +869,7 @@ void write_reply(rx_cmd_buff_t* rx_cmd_buff_o, tx_cmd_buff_t* tx_cmd_buff_o) {
           tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)(0x06+success));
           tx_cmd_buff_o->data[OPCODE_INDEX] = COMMON_DATA_OPCODE;
           for(int j = 0; j < success; j++) {
-            tx_cmd_buff_o->data[DATA_START_INDEX+j] = rx_cmd_buff_o->data[DATA_START_INDEX+0+j];
+            tx_cmd_buff_o->data[DATA_START_INDEX+j] = rx_cmd_buff_o->data[DATA_START_INDEX+5+j];
           }
         } else {
           tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);
