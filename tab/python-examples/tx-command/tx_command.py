@@ -136,7 +136,20 @@ while(1):
 
   elif code == "common_write_ext":
     cmd = TxCmd(COMMON_WRITE_EXT_OPCODE, HWID, msgid, GND, CDH)
-    cmd.common_write_ext(int(opts[0],16), list(int(z,16) for z in list(hex(ord(y))[2:] for x in opts[1:] for y in x)))
+    data = []
+    for x in opts[1:]:
+      try:
+          try:
+              x = int(x)
+              z = x.to_bytes((x.bit_length()+7)//8,byteorder='big')
+              for y in z:
+                  data.append(y)
+          except:
+              data.append(int(x,16))
+      except:
+          for y in x:
+                  data.append(int(hex(ord(y))[2:],16))
+    cmd.common_write_ext(int(opts[0],16), data)
     byte_i = 0
     while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
       if byte_i < cmd.get_byte_count():
