@@ -134,6 +134,25 @@ while(1):
     msgid += 1
     time.sleep(1.0)
 
+  elif code == "common_write_ext_opcde":
+    cmd = TxCmd(COMMON_WRITE_EXT_OPCODE_OPCODE, HWID, msgid, GND, CDH)
+    cmd.common_write_ext_opcode(0x01010101, [0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b])
+    byte_i = 0
+    while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+      if byte_i < cmd.get_byte_count():
+        serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+        byte_i += 1
+      if serial_port.in_waiting>0:
+        bytes = serial_port.read(1)
+        for b in bytes:
+          rx_cmd_buff.append_byte(b)
+    print('txcmd: '+str(cmd))
+    print('reply: '+str(rx_cmd_buff)+'\n')
+    cmd.clear()
+    rx_cmd_buff.clear()
+    msgid += 1
+    time.sleep(1.0)
+
   elif code == "bootloader_ack":
     cmd = TxCmd(BOOTLOADER_ACK_OPCODE, HWID, msgid, GND, CDH)
     byte_i = 0

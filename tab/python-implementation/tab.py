@@ -30,6 +30,9 @@ COMMON_ACK_OPCODE                   = 0x10
 COMMON_NACK_OPCODE                  = 0xff
 COMMON_DEBUG_OPCODE                 = 0x11
 COMMON_DATA_OPCODE                  = 0x16
+COMMON_WRITE_EXT_OPCODE             = 0x1a
+COMMON_ERASE_SECTOR_EXT_OPCODE      = 0x1b
+COMMON_READ_EXT_OPCODE              = 0x1c
 BOOTLOADER_ACK_OPCODE               = 0x01
 BOOTLOADER_NACK_OPCODE              = 0x0f
 BOOTLOADER_PING_OPCODE              = 0x00
@@ -44,6 +47,9 @@ GND = 0x00
 COM = 0x01
 CDH = 0x02
 PLD = 0x03
+
+## Flash ID Nibbles
+FLASH1 = 0x00
 
 ## TAB command indices
 START_BYTE_0_INDEX = 0
@@ -222,6 +228,15 @@ class TxCmdBuff:
         else:
           self.data[MSG_LEN_INDEX] = 0x06
           self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
+      elif rx_cmd_buff.data[OPCODE_INDEX] == COMMON_WRITE_EXT_OPCODE:
+        self.data[MSG_LEN_INDEX] = 0x06
+        self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
+      elif rx_cmd_buff.data[OPCODE_INDEX] == COMMON_ERASE_SECTOR_EXT_OPCODE:
+        self.data[MSG_LEN_INDEX] = 0x06
+        self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
+      elif rx_cmd_buff.data[OPCODE_INDEX] == COMMON_READ_EXT_OPCODE:
+        self.data[MSG_LEN_INDEX] = 0x06
+        self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
       elif rx_cmd_buff.data[OPCODE_INDEX] == BOOTLOADER_ACK_OPCODE:
         self.data[MSG_LEN_INDEX] = 0x06
         self.data[OPCODE_INDEX] = COMMON_NACK_OPCODE
@@ -332,6 +347,27 @@ def cmd_bytes_to_str(data):
     cmd_str += 'common_data'
     for i in range(0,data[MSG_LEN_INDEX]-0x06):
       pld_str += ' 0x{:02x}'.format(data[PLD_START_INDEX+i])
+  elif data[OPCODE_INDEX] == COMMON_WRITE_EXT_OPCODE:
+    cmd_str += 'common_write_ext'
+    pld_str += ' Address: 0x{:08x}'.format(\
+     (data[PLD_START_INDEX+0]<<24)|(data[PLD_START_INDEX+1]<<16)|\
+     (data[PLD_START_INDEX+2]<< 8)|(data[PLD_START_INDEX+3]<< 0)\
+    ) 
+    pld_str += ' Data :'
+    for i in range(0,data[MSG_LEN_INDEX]-0x0b):
+        pld_str += '{:02x}'.format(data[PLD_START_INDEX+5+i])
+  elif data[OPCODE_INDEX] == COMMON_ERASE_SECTOR_EXT_OPCODE:
+    cmd_str += 'common_erase_sector_ext'
+    pld_str += ' Address: 0x{:08x}'.format(\
+     (data[PLD_START_INDEX+0]<<24)|(data[PLD_START_INDEX+1]<<16)|\
+     (data[PLD_START_INDEX+2]<< 8)|(data[PLD_START_INDEX+3]<< 0)\
+    ) 
+  elif data[OPCODE_INDEX] == COMMON_READ_EXT_OPCODE:
+    cmd_str += 'common_read_ext'
+    pld_str += ' Address: 0x{:08x}'.format(\
+     (data[PLD_START_INDEX+0]<<24)|(data[PLD_START_INDEX+1]<<16)|\
+     (data[PLD_START_INDEX+2]<< 8)|(data[PLD_START_INDEX+3]<< 0)\
+    ) 
   elif data[OPCODE_INDEX] == BOOTLOADER_ACK_OPCODE:
     cmd_str += 'bootloader_ack'
     if (data[MSG_LEN_INDEX] == 0x07):
@@ -422,6 +458,29 @@ class TxCmd:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == COMMON_DATA_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
+    elif self.data[OPCODE_INDEX] == COMMON_WRITE_EXT_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
+      self.data[MSG_LEN_INDEX] = 0x0b
+      self.data[PLD_START_INDEX+0] = 0x00
+      self.data[PLD_START_INDEX+1] = 0x00
+      self.data[PLD_START_INDEX+2] = 0x00
+      self.data[PLD_START_INDEX+3] = 0x00
+      self.data[PLD_START_INDEX+4] = 0x00
+    elif self.data[OPCODE_INDEX] == COMMON_ERASE_SECTOR_EXT_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x06
+      self.data[MSG_LEN_INDEX] = 0x0b
+      self.data[PLD_START_INDEX+0] = 0x00
+      self.data[PLD_START_INDEX+1] = 0x00
+      self.data[PLD_START_INDEX+2] = 0x00
+      self.data[PLD_START_INDEX+3] = 0x00
+      self.data[PLD_START_INDEX+4] = 0x00
+    elif self.data[OPCODE_INDEX] == COMMON_READ_EXT_OPCODE:
+      self.data[MSG_LEN_INDEX] = 0x0b
+      self.data[PLD_START_INDEX+0] = 0x00
+      self.data[PLD_START_INDEX+1] = 0x00
+      self.data[PLD_START_INDEX+2] = 0x00
+      self.data[PLD_START_INDEX+3] = 0x00
+      self.data[PLD_START_INDEX+4] = 0x00
     elif self.data[OPCODE_INDEX] == BOOTLOADER_ACK_OPCODE:
       self.data[MSG_LEN_INDEX] = 0x06
     elif self.data[OPCODE_INDEX] == BOOTLOADER_NACK_OPCODE:
@@ -468,6 +527,37 @@ class TxCmd:
         self.data[MSG_LEN_INDEX] = 0x06+len(bytes)
         for i in range(0,len(bytes)):
           self.data[PLD_START_INDEX+i] = bytes[i]
+  def common_write_ext(self, addr, data=[], flashid=0x00):
+    if self.data[OPCODE_INDEX] == COMMON_WRITE_EXT_OPCODE:
+      addr_bytes = addr.to_bytes(4,byteorder='big')
+      self.data[MSG_LEN_INDEX] = 0x0b+len(data)
+      self.data[PLD_START_INDEX+0] = flashid
+      self.data[PLD_START_INDEX+1] = addr_bytes[0]
+      self.data[PLD_START_INDEX+2] = addr_bytes[1]
+      self.data[PLD_START_INDEX+3] = addr_bytes[2]
+      self.data[PLD_START_INDEX+4] = addr_bytes[3]
+      for i in range(0,len(data)):
+        self.data[PLD_START_INDEX+5+i] = data[i]
+
+  def common_erase_sector_ext(self, addr, flashid=0x00):
+    if self.data[OPCODE_INDEX] == COMMON_ERASE_SECTOR_EXT_OPCODE:
+      addr_bytes = addr.to_bytes(4,byteorder='big')
+      self.data[MSG_LEN_INDEX] = 0x0b
+      self.data[PLD_START_INDEX+0] = flashid
+      self.data[PLD_START_INDEX+1] = addr_bytes[0]
+      self.data[PLD_START_INDEX+2] = addr_bytes[1]
+      self.data[PLD_START_INDEX+3] = addr_bytes[2]
+      self.data[PLD_START_INDEX+4] = addr_bytes[3]
+
+  def common_read_ext(self, addr, flashid=0x00):
+    if self.data[OPCODE_INDEX] == COMMON_READ_EXT_OPCODE:
+      addr_bytes = addr.to_bytes(4,byteorder='big')
+      self.data[MSG_LEN_INDEX] = 0x0b
+      self.data[PLD_START_INDEX+0] = flashid
+      self.data[PLD_START_INDEX+1] = addr_bytes[0]
+      self.data[PLD_START_INDEX+2] = addr_bytes[1]
+      self.data[PLD_START_INDEX+3] = addr_bytes[2]
+      self.data[PLD_START_INDEX+4] = addr_bytes[3]
 
   def bootloader_write_page(self, page_number, page_data=[]):
     if self.data[OPCODE_INDEX] == BOOTLOADER_WRITE_PAGE_OPCODE:

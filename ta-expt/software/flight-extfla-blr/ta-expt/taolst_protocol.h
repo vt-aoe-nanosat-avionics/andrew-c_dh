@@ -13,6 +13,8 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // uint8_t, uint32_t
 
+#include <libopencm3/stm32/quadspi.h> // QUADSPI functions
+
 // Macros
 
 //// General
@@ -34,9 +36,13 @@
 #define BOOTLOADER_WRITE_PAGE_OPCODE ((uint8_t)0x02)
 #define BOOTLOADER_JUMP_OPCODE       ((uint8_t)0x0b)
 #define BOOTLOADER_POWER_OPCODE      ((uint8_t)0x0d)
+#define COMMON_WRITE_EXT_OPCODE      ((uint8_t)0x1a)
+#define COMMON_ERASE_SECTOR_EXT_OPCODE      ((uint8_t)0x1b)
+#define COMMON_READ_EXT_OPCODE       ((uint8_t)0x1c)
 #define COMMON_ACK_OPCODE            ((uint8_t)0x10)
 #define COMMON_ASCII_OPCODE          ((uint8_t)0x11)
 #define COMMON_NACK_OPCODE           ((uint8_t)0xff)
+#define COMMON_DATA_OPCODE           ((uint8_t)0x16)
 
 //// BOOTLOADER_ACK reasons
 #define BOOTLOADER_ACK_REASON_PONG   ((uint8_t)0x00)
@@ -126,6 +132,13 @@ void clear_tx_cmd_buff(tx_cmd_buff_t* tx_cmd_buff_o);
 //// Indicates whether MCU is in bootloader mode or application mode
 int bootloader_running(void);
 
+//// Moves the MCU to a new power mode
+void move_power_mode(tx_cmd_buff_t* tx_cmd_buff);
+
+
+int ext_flash_check_write_in_progess(void);
+
+
 // Command functions
 
 //// BOOTLOADER_ERASE
@@ -138,7 +151,14 @@ int bootloader_write_data(rx_cmd_buff_t* rx_cmd_buff);
 int bootloader_power_mode_change(rx_cmd_buff_t* rx_cmd_buff);
 
 
-void move_power_mode(tx_cmd_buff_t* tx_cmd_buff);
+int common_write_ext(rx_cmd_buff_t* rx_cmd_buff);
+
+
+int common_erase_sector_ext(rx_cmd_buff_t* rx_cmd_buff);
+
+
+int common_read_ext(rx_cmd_buff_t* rx_cmd_buff);
+
 
 // Protocol functions
 

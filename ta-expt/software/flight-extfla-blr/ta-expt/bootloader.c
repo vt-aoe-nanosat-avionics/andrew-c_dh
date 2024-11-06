@@ -17,12 +17,13 @@
 #include <libopencm3/stm32/rcc.h>   // used in init_clock, init_rtc
 #include <libopencm3/stm32/rtc.h>   // used in rtc functions
 #include <libopencm3/stm32/usart.h> // used in init_uart
-#include <libopenmc3/stm32/quadspi.h> // used in init_extern_flash
+#include <libopencm3/stm32/exti.h>  // used in init_exti
+#include <libopencm3/stm32/quadspi.h> // used in init_extern_flash
 
 // ta-expt library
 #include <bootloader.h>             // Header file
 #include <taolst_protocol.h>        // TAOLST protocol macros, typedefs, fnctns
-#include <IS25LP128F.h>             // IS25LP128F flash memory macros
+#include <IS25LP128F.h>              // IS25LP128F flash memory macros
 
 // Variables
 int rtc_set = 0; // Boolean; Zero until RTC date and time have been set
@@ -84,6 +85,18 @@ void init_uart(void) {
   usart_enable(USART1);
 }
 
+void init_exti(void) {
+  rcc_periph_clock_enable(RCC_SYSCFG);     // Enable system configuration
+  nvic_clear_pending_irq(NVIC_EXTI15_10_IRQ);
+  nvic_enable_irq(NVIC_EXTI15_10_IRQ);
+  gpio_mode_setup(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_PULLDOWN, GPIO13);
+  exti_select_source(EXTI13, GPIOC);
+  exti_set_trigger(EXTI13, EXTI_TRIGGER_RISING);
+  EXTI_EMR |= EXTI13;
+  RCC_CFGR |= RCC_CFGR_STOPWUCK_HSI16;     // HSI16 is wakeup clock
+  rcc_periph_clock_disable(RCC_SYSCFG);    // Disable system configuration
+}
+
 void init_rtc(void) {
   rcc_osc_on(RCC_LSI);               // Low-speed internal oscillator
   rcc_wait_for_osc_ready(RCC_LSI);   // Wait until oscillator is ready
@@ -96,22 +109,52 @@ void init_rtc(void) {
   rtc_set = 0;                       // RTC date and time has not yet been set
 }
 
-void init_extern_flash(void) {
+void init_flash_ext(void) {
+
+  struct quadspi_command enableQPI = {
+    .instruction.mode = QUADSPI_CCR_MODE_1LINE,
+    .instruction.instruction = IS25LP128F_CMD_ENTER_QPI_MODE,
+    .alternative_bytes.mode = QUADSPI_CCR_MODE_NONE,
+    .address.mode = QUADSPI_CCR_MODE_NONE,
+    .dummy_cycles = 0,
+    .data_mode = QUADSPI_CCR_MODE_NONE
+  };
+
+  struct quadspi_command enableWrite_single = {
+    .instruction.mode = QUADSPI_CCR_MODE_1LINE,
+    .instruction.instruction = IS25LP128F_CMD_WRITE_ENABLE,
+    .alternative_bytes.mode = QUADSPI_CCR_MODE_NONE,
+    .address.mode = QUADSPI_CCR_MODE_NONE,
+    .dummy_cycles = 0,
+    .data_mode = QUADSPI_CCR_MODE_NONE
+  };
+
+  gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO1 | GPIO2 | GPIO3 | GPIO4);
+  gpio_mode_setup(GPIOC, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO11);
+  gpio_mode_setup(GPIOA, GPIO_MODE_AF, GPIO_PUPD_NONE, GPIO3);
+  gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO1 | GPIO2 | GPIO3 | GPIO4);
+  gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO11);
+  gpio_set_output_options(GPIOA, GPIO_OTYPE_PP, GPIO_OSPEED_VERYHIGH, GPIO3);
+  gpio_set_af(GPIOC, GPIO_AF10, GPIO1 | GPIO2 | GPIO3 | GPIO4);
+  gpio_set_af(GPIOC, GPIO_AF5, GPIO11);
+  gpio_set_af(GPIOA, GPIO_AF10, GPIO3);
+
   quadspi_disable();
   quadspi_set_flash_size(23); // 128 Mbit = 16 Mbyte = 2^(n+1) // n = 23
-  quadspi_set_high_time(6);   // 1/2 clock cycle
-  quadspi_set_prescaler(0);   // 1:1 prescaler
-  quadspi_enable_sample_shift();
+  quadspi_set_cs_high_time(6);   // 1/2 clock cycle
+  quadspi_set_prescaler(1);   // 1:2 prescaler
 	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
+  quadspi_select_flash(QUADSPI_FLASH_SEL_2);
+  quadspi_set_threshold_level(7); // Set FIFO threshold level to 8 bytes
+  quadspi_enable();
 
-  quadspi_send_instruction(IS25LP128F_CMD_RESET_ENABLE, QUADSPI_CCR_MODE_1LINE);
-  quadspi_send_instruction(IS25LP128F_CMD_RESET, QUADSPI_CCR_MODE_1LINE);
+  rcc_periph_clock_enable(RCC_QSPI);
 
-  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
-  quadspi_write_register(IS25LP128F_CMD_WRITE_READ_PARAMETERS, QUADSPI_CCR_MODE_1LINE, 0x09 << 4);
+  quadspi_wait_while_busy();
+  quadspi_write(&enableWrite_single, NULL, 0);
 
-  quadspi_send_instruction(IS25LP128F_CMD_WRITE_ENABLE, QUADSPI_CCR_MODE_1LINE);
-  quadspi_send_instruction(IS25LP128F_CMD_ENTER_QPI_MODE, QUADSPI_CCR_MODE_1LINE);
+  quadspi_wait_while_busy();
+  quadspi_write(&enableQPI, NULL, 0);
 }
 
 // Utility functions
