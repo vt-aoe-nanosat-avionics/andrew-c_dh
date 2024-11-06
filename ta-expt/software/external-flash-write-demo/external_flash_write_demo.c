@@ -18,7 +18,7 @@
 
 #include <IS25LP128F.h>              // IS25LP128F flash memory macros
 
-#define ADDRESS 0x003FA5A5
+#define ADDRESS 0x001111FF
 
 
 //void quadspi_write(uint32_t address, uint32_t length, uint8_t data[]);
@@ -155,6 +155,10 @@ int main(void) {
   usart_send_blocking(USART1,memoryContent[5]);
   usart_send_blocking(USART1,memoryContent[6]);
   usart_send_blocking(USART1,memoryContent[7]);
+  usart_send_blocking(USART1,memoryContent[8]);
+  usart_send_blocking(USART1,memoryContent[9]);
+  usart_send_blocking(USART1,memoryContent[10]);
+  usart_send_blocking(USART1,memoryContent[11]);
 
 
   //while(1);
@@ -181,6 +185,10 @@ int main(void) {
   memoryContent[5] = 0x20;
   memoryContent[6] = 0x77;
   memoryContent[7] = 0x6f;
+  memoryContent[8] = 'r';
+  memoryContent[9] = 'l';
+  memoryContent[10] = 'd';
+  memoryContent[11] = '!';
 
   quadspi_wait_while_busy();
   quadspi_write(&enableWrite, memoryContent, 0);
@@ -189,7 +197,7 @@ int main(void) {
   quadspi_write(&write, memoryContent, 8);
   //for(int i = 0; i < 40000; i++) {__asm__("nop");}
 
-  uint8_t flashContent[8];
+  uint8_t flashContent[16];
 
   quadspi_wait_while_busy();
   quadspi_read(&read, flashContent, 8);
@@ -208,6 +216,10 @@ int main(void) {
   usart_send_blocking(USART1,flashContent[5]);
   usart_send_blocking(USART1,flashContent[6]);
   usart_send_blocking(USART1,flashContent[7]);
+  usart_send_blocking(USART1,flashContent[8]);
+  usart_send_blocking(USART1,flashContent[9]);
+  usart_send_blocking(USART1,flashContent[10]);
+  usart_send_blocking(USART1,flashContent[11]);
   
 
   return 0;
