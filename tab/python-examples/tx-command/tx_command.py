@@ -445,6 +445,33 @@ while(1):
     break
 
   elif code == "read_file":
+
+    filesize = opts[0]
+    address = int(opts[1],16)
+    file = open('testfile', 'r')
+
+    for i in range(0, filesize, 128):
+      file_data = file.read(128)
+
+      cmd = TxCmd(COMMON_READ_EXT_OPCODE, HWID, msgid, GND, CDH)
+      cmd.common_read_ext(address, 128)
+      address = address + 128
+      byte_i = 0
+      while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+        if byte_i < cmd.get_byte_count():
+          serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+          byte_i += 1
+        if serial_port.in_waiting>0:
+          bytes = serial_port.read(1)
+          for b in bytes:
+            rx_cmd_buff.append_byte(b)
+      for i in range(0,rx_cmd_buff.data[MSG_LEN_INDEX]-0x06):
+        pld_str += ' 0x{:02x}'.format(rx_cmd_buff.data[PLD_START_INDEX+i])
+      print('txcmd: '+str(cmd))
+      print('reply: '+str(rx_cmd_buff)+'\n')
+      cmd.clear()
+      rx_cmd_buff.clear()
+      msgid += 1
     break
 
   elif code == "exit":
