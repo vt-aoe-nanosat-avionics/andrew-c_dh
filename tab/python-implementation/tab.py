@@ -556,14 +556,13 @@ class TxCmd:
   def common_read_ext(self, addr, data_length, flashid=0x00):
     if self.data[OPCODE_INDEX] == COMMON_READ_EXT_OPCODE:
       addr_bytes = addr.to_bytes(4,byteorder='big')
-      length_bytes = data_length.to_bytes(1,byteorder='big')
       self.data[MSG_LEN_INDEX] = 0x0c
       self.data[PLD_START_INDEX+0] = flashid
-      self.data[PLD_START_INDEX+1] = length_bytes[0]
-      self.data[PLD_START_INDEX+2] = addr_bytes[0]
-      self.data[PLD_START_INDEX+3] = addr_bytes[1]
-      self.data[PLD_START_INDEX+4] = addr_bytes[2]
-      self.data[PLD_START_INDEX+5] = addr_bytes[3]
+      self.data[PLD_START_INDEX+1] = addr_bytes[0]
+      self.data[PLD_START_INDEX+2] = addr_bytes[1]
+      self.data[PLD_START_INDEX+3] = addr_bytes[2]
+      self.data[PLD_START_INDEX+4] = addr_bytes[3]
+      self.data[PLD_START_INDEX+5] = data_length
 
   def bootloader_write_page(self, page_number, page_data=[]):
     if self.data[OPCODE_INDEX] == BOOTLOADER_WRITE_PAGE_OPCODE:

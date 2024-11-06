@@ -144,7 +144,7 @@ void init_flash_ext(void) {
   quadspi_disable();
   quadspi_set_flash_size(23); // 128 Mbit = 16 Mbyte = 2^(n+1) // n = 23
   quadspi_set_cs_high_time(6);   // 1/2 clock cycle
-  quadspi_set_prescaler(1);   // 1:2 prescaler
+  quadspi_set_prescaler(79);   // 1:80 prescaler
 	quadspi_clear_flag(QUADSPI_FCR_CTOF | QUADSPI_FCR_CSMF | QUADSPI_FCR_CTCF | QUADSPI_FCR_CTEF);
   quadspi_select_flash(QUADSPI_FLASH_SEL_2);
   quadspi_set_threshold_level(7); // Set FIFO threshold level to 8 bytes

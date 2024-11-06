@@ -508,7 +508,8 @@ int common_write_ext(rx_cmd_buff_t* rx_cmd_buff) {
   ) {
     uint8_t data_length = (uint8_t)(rx_cmd_buff->data[MSG_LEN_INDEX]) - 0x0b;
     uint8_t flash_id_nibble = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX]);
-    uint32_t addr = (uint32_t)(rx_cmd_buff->data[DATA_START_INDEX+1]);
+    uint32_t addr = *(uint32_t*)(&(rx_cmd_buff->data[DATA_START_INDEX])+1);
+    addr = (addr&0xff >> 24) | ((addr >> 8) & 0xFF00) | ((addr << 8) & 0xFF0000) | (addr&0xff000000 << 24);
     uint8_t* data = &(rx_cmd_buff->data[DATA_START_INDEX+5]);
 
     uint8_t ready;
@@ -541,7 +542,8 @@ int common_erase_sector_ext(rx_cmd_buff_t* rx_cmd_buff) {
    rx_cmd_buff->data[OPCODE_INDEX]==COMMON_ERASE_SECTOR_EXT_OPCODE
   ) {
     uint8_t flash_id_nibble = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX]);
-    uint32_t addr = (uint32_t)(rx_cmd_buff->data[DATA_START_INDEX+1]);
+    uint32_t addr = *(uint32_t*)(&(rx_cmd_buff->data[DATA_START_INDEX+1]));
+    addr = (addr&0xff >> 24) | ((addr >> 8) & 0xFF00) | ((addr << 8) & 0xFF0000) | (addr&0xff000000 << 24);
 
     uint8_t ready;
     uint16_t i = 0;
@@ -573,7 +575,8 @@ int common_read_ext(rx_cmd_buff_t* rx_cmd_buff) {
    rx_cmd_buff->data[OPCODE_INDEX]==COMMON_READ_EXT_OPCODE
   ) {
     uint8_t flash_id_nibble = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX]);
-    uint32_t addr = (uint32_t)(rx_cmd_buff->data[DATA_START_INDEX+1]);
+    uint32_t addr = *(uint32_t*)(&(rx_cmd_buff->data[DATA_START_INDEX])+1);
+    addr = (addr&0xff >> 24) | ((addr >> 8) & 0xFF00) | ((addr << 8) & 0xFF0000) | (addr&0xff000000 << 24);
     uint8_t data_length = (uint8_t)(rx_cmd_buff->data[DATA_START_INDEX+5]);
     uint8_t* data = &(rx_cmd_buff->data[DATA_START_INDEX+5]);
 
@@ -589,7 +592,7 @@ int common_read_ext(rx_cmd_buff_t* rx_cmd_buff) {
     {
       read.address.address = addr;
       quadspi_wait_while_busy();
-      quadspi_write(&read, data, data_length);
+      quadspi_read(&read, data, data_length);
       return data_length;
     } else {
       return 0;
@@ -866,7 +869,9 @@ void write_reply(rx_cmd_buff_t* rx_cmd_buff_o, tx_cmd_buff_t* tx_cmd_buff_o) {
         if(success) {
           tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)(0x06+success));
           tx_cmd_buff_o->data[OPCODE_INDEX] = COMMON_DATA_OPCODE;
-          tx_cmd_buff_o->data[DATA_START_INDEX] = rx_cmd_buff_o->data[DATA_START_INDEX+5];
+          for(int j = 0; j < success; j++) {
+            tx_cmd_buff_o->data[DATA_START_INDEX+j] = rx_cmd_buff_o->data[DATA_START_INDEX+0+j];
+          }
         } else {
           tx_cmd_buff_o->data[MSG_LEN_INDEX] = ((uint8_t)0x06);
           tx_cmd_buff_o->data[OPCODE_INDEX] = COMMON_NACK_OPCODE;
