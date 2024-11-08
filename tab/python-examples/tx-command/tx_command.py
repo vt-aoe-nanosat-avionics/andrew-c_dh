@@ -420,15 +420,50 @@ while(1):
   elif code == "write_file":
     filename = opts[0]
     address = int(opts[1],16)
-    file = open(filename, 'r')
+    file = open(filename, 'rb')
     filesize = os.path.getsize(filename)
 
-    for i in range(0, filesize, 128):
-      file_data = bytearray(file.read(128))
+    #for i in range(0, math.ceil(filesize/0x00001000)):
+    #  cmd = TxCmd(COMMON_ERASE_SECTOR_EXT_OPCODE, HWID, msgid, GND, CDH)
+    #  cmd.common_erase_sector_ext(address)
+    #  address += 0x00001000
+    #  byte_i = 0
+    #  while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+    #    if byte_i < cmd.get_byte_count():
+    #      serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+    #      byte_i += 1
+    #    if serial_port.in_waiting>0:
+    #      bytes = serial_port.read(1)
+    #      for b in bytes:
+    #        rx_cmd_buff.append_byte(b)
+    #  print('txcmd: '+str(cmd))
+    #  print('reply: '+str(rx_cmd_buff)+'\n')
+    #  cmd.clear()
+    #  rx_cmd_buff.clear()
+    #  msgid += 1
+    #  time.sleep(1)
+
+
+    file_data = list(file.read())
+    file.close()
+    filesize_data = list(filesize.to_bytes(4,byteorder='big'))
+    write_data = filesize_data + file_data
+    writelength = 128
+
+    while writelength == 128:
+      if len(write_data) > 128:
+        writelength = 128
+      else:
+        writelength = len(write_data)
+
+      print(len(write_data))
+
 
       cmd = TxCmd(COMMON_WRITE_EXT_OPCODE, HWID, msgid, GND, CDH)
-      cmd.common_write_ext(address, list(filesize.to_bytes(4,byteorder='big'), file_data))
-      address = address + 128
+      cmd.common_write_ext(address, write_data[:writelength])
+      if writelength == 128:
+        write_data = write_data[writelength:]
+      address += writelength
       byte_i = 0
       while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
         if byte_i < cmd.get_byte_count():
@@ -443,20 +478,48 @@ while(1):
       cmd.clear()
       rx_cmd_buff.clear()
       msgid += 1
-    break
+
 
   elif code == "read_file":
+    address = int(opts[0],16)
+    file = open('testfile', 'wb')
 
-    filesize = opts[0]
-    address = int(opts[1],16)
-    file = open('testfile', 'r')
+    #filesize = int(opts[1],16)
 
-    for i in range(0, filesize, 128):
-      file_data = file.read(128)
+    cmd = TxCmd(COMMON_READ_EXT_OPCODE, HWID, msgid, GND, CDH)
+    cmd.common_read_ext(address, 4)
+    address += 0x04
+    byte_i = 0
+    while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
+      if byte_i < cmd.get_byte_count():
+        serial_port.write(cmd.data[byte_i].to_bytes(1, byteorder='big'))
+        byte_i += 1
+      if serial_port.in_waiting>0:
+        bytes = serial_port.read(1)
+        for b in bytes:
+          rx_cmd_buff.append_byte(b)
+      filesize = int.from_bytes(rx_cmd_buff.data[PLD_START_INDEX:PLD_START_INDEX+4], byteorder='big')
+    print('txcmd: '+str(cmd))
+    print('reply: '+str(rx_cmd_buff)+'\n')
+    cmd.clear()
+    rx_cmd_buff.clear()
+    msgid += 1
 
+    
+    file_data = filesize
+    file_data = []
+    readLength = 128
+
+    while readLength == 128:
+      if filesize - len(file_data) > 128:
+        readLength = 128
+      else:
+        readLength = filesize - len(file_data)
+
+      print(filesize - len(file_data))
       cmd = TxCmd(COMMON_READ_EXT_OPCODE, HWID, msgid, GND, CDH)
-      cmd.common_read_ext(address, 128)
-      address = address + 128
+      cmd.common_read_ext(address, readLength)
+      address += 0x80
       byte_i = 0
       while rx_cmd_buff.state != RxCmdBuffState.COMPLETE:
         if byte_i < cmd.get_byte_count():
@@ -467,13 +530,15 @@ while(1):
           for b in bytes:
             rx_cmd_buff.append_byte(b)
       for i in range(0,rx_cmd_buff.data[MSG_LEN_INDEX]-0x06):
-        pld_str += ' 0x{:02x}'.format(rx_cmd_buff.data[PLD_START_INDEX+i])
+        file_data.append(rx_cmd_buff.data[PLD_START_INDEX+i])
       print('txcmd: '+str(cmd))
       print('reply: '+str(rx_cmd_buff)+'\n')
       cmd.clear()
       rx_cmd_buff.clear()
       msgid += 1
-    break
+
+    file.write(bytearray(file_data))
+    file.close()
 
   elif code == "exit":
     break
