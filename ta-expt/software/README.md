@@ -18,6 +18,10 @@ make
 
 See the README in each program directory for details.
 
+## Andrew McGrellis Contributions
+
+writeup for each folder
+
 ## Directory Contents
 
 * [blink](blink/README.md): Makes the Tartan Artibeus EXPT board LEDs blink
